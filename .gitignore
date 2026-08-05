@@ -1,0 +1,19 @@
+echo "# Backend" > .gitignore
+echo "/backend/.env" >> .gitignore
+echo "/backend/vendor/" >> .gitignore
+echo "/backend/storage/" >> .gitignore
+echo "/backend/bootstrap/cache/" >> .gitignore
+echo "/backend/node_modules/" >> .gitignore
+echo "# Frontend" >> .gitignore
+echo "/frontend/node_modules/" >> .gitignore
+echo "/frontend/build/" >> .gitignore
+echo "/frontend/.env" >> .gitignore
+echo "/frontend/.env.local" >> .gitignore
+echo "/frontend/.env.development.local" >> .gitignore
+echo "/frontend/.env.test.local" >> .gitignore
+echo "/frontend/.env.production.local" >> .gitignore
+echo "# IDE and OS" >> .gitignore
+echo ".vscode/" >> .gitignore
+echo ".idea/" >> .gitignore
+echo "Thumbs.db" >> .gitignore
+echo ".DS_Store" >> .gitignore
