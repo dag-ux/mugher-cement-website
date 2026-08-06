@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import ThemeToggle from './ThemeToggle';
 import { 
   FaHome, 
   FaInfoCircle, 
@@ -41,19 +42,19 @@ export default function Header() {
   ];
 
   return (
-    <header className="bg-white shadow-md sticky top-0 z-50 transition-shadow duration-300">
+    <header className="bg-white dark:bg-gray-800 shadow-md dark:shadow-gray-900/30 sticky top-0 z-50 transition-shadow duration-300">
       <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
         {/* Logo */}
         <Link to="/" className="flex items-center space-x-2 group">
           <img src="/Muger_Cement2.jpg" alt="Mugher Cement" className="h-10 w-auto transition-transform duration-300 group-hover:scale-105" />
           <span className="text-2xl font-bold tracking-tight">
-            <span className="text-[#1A3C91]">Mugher</span>{' '}
-            <span className="text-[#2EAD32]">Cement</span>
+            <span className="text-[#1A3C91] dark:text-[#4A7DB4]">Mugher</span>{' '}
+            <span className="text-[#2EAD32] dark:text-[#4ADE80]">Cement</span>
           </span>
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center space-x-8 text-gray-600 font-medium">
+        <div className="hidden md:flex items-center space-x-8 text-gray-600 dark:text-gray-300 font-medium">
           {navItems.map((item) => {
             const active = isActive(item.path);
             return (
@@ -61,14 +62,14 @@ export default function Header() {
                 key={item.path}
                 to={item.path}
                 className={`relative flex items-center space-x-1.5 transition-colors duration-200 ${
-                  active ? 'text-[#2EAD32]' : 'hover:text-[#2EAD32]'
+                  active ? 'text-[#2EAD32] dark:text-[#4ADE80]' : 'hover:text-[#2EAD32] dark:hover:text-[#4ADE80]'
                 }`}
               >
                 <IconRenderer icon={item.icon} size={18} />
                 <span>{item.label}</span>
                 {/* Active underline animation */}
                 <span
-                  className={`absolute -bottom-1 left-0 h-0.5 bg-[#2EAD32] transition-all duration-300 ${
+                  className={`absolute -bottom-1 left-0 h-0.5 bg-[#2EAD32] dark:bg-[#4ADE80] transition-all duration-300 ${
                     active ? 'w-full' : 'w-0 group-hover:w-full'
                   }`}
                 />
@@ -76,10 +77,13 @@ export default function Header() {
             );
           })}
           
+          {/* Theme Toggle - Desktop */}
+          <ThemeToggle />
+
           {token ? (
             <button
               onClick={handleLogout}
-              className="flex items-center space-x-1.5 text-red-500 hover:text-red-700 transition-colors duration-200"
+              className="flex items-center space-x-1.5 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors duration-200"
             >
               <IconRenderer icon={FaSignOutAlt} size={18} />
               <span>Logout</span>
@@ -88,13 +92,13 @@ export default function Header() {
             <Link
               to="/login"
               className={`relative flex items-center space-x-1.5 transition-colors duration-200 ${
-                isActive('/login') ? 'text-[#2EAD32]' : 'hover:text-[#2EAD32]'
+                isActive('/login') ? 'text-[#2EAD32] dark:text-[#4ADE80]' : 'hover:text-[#2EAD32] dark:hover:text-[#4ADE80]'
               }`}
             >
               <IconRenderer icon={FaUserLock} size={18} />
               <span>Admin</span>
               <span
-                className={`absolute -bottom-1 left-0 h-0.5 bg-[#2EAD32] transition-all duration-300 ${
+                className={`absolute -bottom-1 left-0 h-0.5 bg-[#2EAD32] dark:bg-[#4ADE80] transition-all duration-300 ${
                   isActive('/login') ? 'w-full' : 'w-0 group-hover:w-full'
                 }`}
               />
@@ -103,28 +107,31 @@ export default function Header() {
         </div>
 
         {/* Mobile Menu Toggle */}
-        <button
-          className="md:hidden text-gray-600 text-2xl hover:text-[#1A3C91] transition-colors duration-200"
-          onClick={() => setIsOpen(!isOpen)}
-          aria-label="Toggle menu"
-        >
-          {isOpen ? <IconRenderer icon={HiX} size={28} /> : <IconRenderer icon={HiMenu} size={28} />}
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle />
+          <button
+            className="text-gray-600 dark:text-gray-300 text-2xl hover:text-[#1A3C91] dark:hover:text-[#4A7DB4] transition-colors duration-200"
+            onClick={() => setIsOpen(!isOpen)}
+            aria-label="Toggle menu"
+          >
+            {isOpen ? <IconRenderer icon={HiX} size={28} /> : <IconRenderer icon={HiMenu} size={28} />}
+          </button>
+        </div>
       </nav>
 
       {/* Mobile Menu */}
       <div
-        className={`md:hidden bg-white border-t border-gray-100 overflow-hidden transition-all duration-300 ease-in-out ${
+        className={`md:hidden bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 overflow-hidden transition-all duration-300 ease-in-out ${
           isOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
-        <div className="px-6 py-4 space-y-3 text-gray-600 font-medium">
+        <div className="px-6 py-4 space-y-3 text-gray-600 dark:text-gray-300 font-medium">
           {navItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center space-x-3 py-2 border-b border-gray-50 transition-colors duration-200 ${
-                isActive(item.path) ? 'text-[#2EAD32]' : 'hover:text-[#2EAD32]'
+              className={`flex items-center space-x-3 py-2 border-b border-gray-50 dark:border-gray-700 transition-colors duration-200 ${
+                isActive(item.path) ? 'text-[#2EAD32] dark:text-[#4ADE80]' : 'hover:text-[#2EAD32] dark:hover:text-[#4ADE80]'
               }`}
               onClick={() => setIsOpen(false)}
             >
@@ -135,7 +142,7 @@ export default function Header() {
           {token ? (
             <button
               onClick={handleLogout}
-              className="flex items-center space-x-3 py-2 text-red-500 hover:text-red-700 transition-colors duration-200 w-full text-left"
+              className="flex items-center space-x-3 py-2 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors duration-200 w-full text-left"
             >
               <IconRenderer icon={FaSignOutAlt} size={18} />
               <span>Logout</span>
@@ -143,8 +150,8 @@ export default function Header() {
           ) : (
             <Link
               to="/login"
-              className={`flex items-center space-x-3 py-2 border-b border-gray-50 transition-colors duration-200 ${
-                isActive('/login') ? 'text-[#2EAD32]' : 'hover:text-[#2EAD32]'
+              className={`flex items-center space-x-3 py-2 border-b border-gray-50 dark:border-gray-700 transition-colors duration-200 ${
+                isActive('/login') ? 'text-[#2EAD32] dark:text-[#4ADE80]' : 'hover:text-[#2EAD32] dark:hover:text-[#4ADE80]'
               }`}
               onClick={() => setIsOpen(false)}
             >
@@ -152,6 +159,7 @@ export default function Header() {
               <span>Admin</span>
             </Link>
           )}
+          {/* Theme toggle is already in the header bar, no need to duplicate */}
         </div>
       </div>
     </header>

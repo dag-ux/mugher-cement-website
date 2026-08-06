@@ -2,13 +2,57 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ----- Base body styles (light mode) ----- */
 body {
   @apply font-sans text-gray-800 bg-light antialiased;
 }
+
+/* ----- Dark mode body styles ----- */
+.dark body {
+  @apply bg-gray-900 text-gray-100;
+}
+
+/* ----- Floating animation (used on product images) ----- */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-12px); }
 }
 .animate-float {
   animation: float 3s ease-in-out infinite;
+}
+
+/* ----- Smooth theme transitions ----- */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* ----- Dark mode scrollbar (WebKit browsers) ----- */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+}
+.dark ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #2EAD32;
+  border-radius: 4px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #4ADE80;
+}
+
+/* ----- Ensure images behave responsively ----- */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ----- Selection colour (brand themed) ----- */
+::selection {
+  background: #1A3C91;
+  color: white;
+}
+.dark ::selection {
+  background: #2EAD32;
+  color: white;
 }
