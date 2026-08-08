@@ -9,8 +9,6 @@ import {
   FaNewspaper, 
   FaBriefcase, 
   FaEnvelope,
-  FaUserLock,
-  FaSignOutAlt
 } from 'react-icons/fa';
 import { HiMenu, HiX } from 'react-icons/hi';
 
@@ -22,12 +20,6 @@ const IconRenderer = ({ icon: Icon, size, className }: { icon: any; size?: numbe
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const token = localStorage.getItem('token');
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    window.location.href = '/';
-  };
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -46,7 +38,11 @@ export default function Header() {
       <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
         {/* Logo */}
         <Link to="/" className="flex items-center space-x-2 group">
-          <img src="/Muger_Cement2.jpg" alt="Mugher Cement" className="h-10 w-auto transition-transform duration-300 group-hover:scale-105" />
+          <img
+            src="/Muger_Cement2.jpg"
+            alt="Mugher Cement"
+            className="h-10 w-auto transition-transform duration-300 group-hover:scale-105"
+          />
           <span className="text-2xl font-bold tracking-tight">
             <span className="text-[#1A3C91] dark:text-[#4A7DB4]">Mugher</span>{' '}
             <span className="text-[#2EAD32] dark:text-[#4ADE80]">Cement</span>
@@ -67,7 +63,7 @@ export default function Header() {
               >
                 <IconRenderer icon={item.icon} size={18} />
                 <span>{item.label}</span>
-                {/* Active underline animation */}
+                {/* Active underline */}
                 <span
                   className={`absolute -bottom-1 left-0 h-0.5 bg-[#2EAD32] dark:bg-[#4ADE80] transition-all duration-300 ${
                     active ? 'w-full' : 'w-0 group-hover:w-full'
@@ -76,34 +72,8 @@ export default function Header() {
               </Link>
             );
           })}
-          
-          {/* Theme Toggle - Desktop */}
+          {/* Theme Toggle */}
           <ThemeToggle />
-
-          {token ? (
-            <button
-              onClick={handleLogout}
-              className="flex items-center space-x-1.5 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors duration-200"
-            >
-              <IconRenderer icon={FaSignOutAlt} size={18} />
-              <span>Logout</span>
-            </button>
-          ) : (
-            <Link
-              to="/login"
-              className={`relative flex items-center space-x-1.5 transition-colors duration-200 ${
-                isActive('/login') ? 'text-[#2EAD32] dark:text-[#4ADE80]' : 'hover:text-[#2EAD32] dark:hover:text-[#4ADE80]'
-              }`}
-            >
-              <IconRenderer icon={FaUserLock} size={18} />
-              <span>Admin</span>
-              <span
-                className={`absolute -bottom-1 left-0 h-0.5 bg-[#2EAD32] dark:bg-[#4ADE80] transition-all duration-300 ${
-                  isActive('/login') ? 'w-full' : 'w-0 group-hover:w-full'
-                }`}
-              />
-            </Link>
-          )}
         </div>
 
         {/* Mobile Menu Toggle */}
@@ -139,27 +109,7 @@ export default function Header() {
               <span>{item.label}</span>
             </Link>
           ))}
-          {token ? (
-            <button
-              onClick={handleLogout}
-              className="flex items-center space-x-3 py-2 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors duration-200 w-full text-left"
-            >
-              <IconRenderer icon={FaSignOutAlt} size={18} />
-              <span>Logout</span>
-            </button>
-          ) : (
-            <Link
-              to="/login"
-              className={`flex items-center space-x-3 py-2 border-b border-gray-50 dark:border-gray-700 transition-colors duration-200 ${
-                isActive('/login') ? 'text-[#2EAD32] dark:text-[#4ADE80]' : 'hover:text-[#2EAD32] dark:hover:text-[#4ADE80]'
-              }`}
-              onClick={() => setIsOpen(false)}
-            >
-              <IconRenderer icon={FaUserLock} size={18} />
-              <span>Admin</span>
-            </Link>
-          )}
-          {/* Theme toggle is already in the header bar, no need to duplicate */}
+          {/* No admin or logout links – accessible only via hidden URLs */}
         </div>
       </div>
     </header>

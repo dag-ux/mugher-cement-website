@@ -4,36 +4,71 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\NewsController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\JobController;
 use Illuminate\Support\Facades\Route;
 
-// Public routes (no authentication needed)
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| is assigned the "api" middleware group. Enjoy building your API!
+|
+*/
+
+// ==================== PUBLIC ROUTES ====================
+// No authentication required
+
+// Products
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{slug}', [ProductController::class, 'show']);
 
+// News
 Route::get('/news', [NewsController::class, 'index']);
 Route::get('/news/{slug}', [NewsController::class, 'show']);
 
+// Contact
 Route::post('/contact', [ContactController::class, 'store']);
 
-// Authentication routes
+// Jobs (public)
+Route::get('/jobs', [JobController::class, 'index']);
+Route::get('/jobs/{slug}', [JobController::class, 'show']);
+Route::post('/jobs/{id}/apply', [JobController::class, 'apply']);
+
+// Authentication
 Route::post('/login', [AuthController::class, 'login']);
 
-// Protected routes (require Sanctum token)
+// ==================== PROTECTED ROUTES ====================
+// Require valid Sanctum token (admin only)
+
 Route::middleware('auth:sanctum')->group(function () {
-    // Admin CRUD for products
+
+    // ---------- Products ----------
     Route::post('/products', [ProductController::class, 'store']);
     Route::put('/products/{id}', [ProductController::class, 'update']);
     Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 
-    // Admin CRUD for news
+    // ---------- News ----------
     Route::post('/news', [NewsController::class, 'store']);
     Route::put('/news/{id}', [NewsController::class, 'update']);
     Route::delete('/news/{id}', [NewsController::class, 'destroy']);
 
-    // View contact messages (admin)
+    // ---------- Contact Messages ----------
     Route::get('/contacts', [ContactController::class, 'index']);
     Route::put('/contacts/{id}/read', [ContactController::class, 'markAsRead']);
 
-    // Logout
+    // ---------- Jobs (Admin) ----------
+    Route::post('/admin/jobs', [JobController::class, 'store']);
+    Route::put('/admin/jobs/{id}', [JobController::class, 'update']);
+    Route::delete('/admin/jobs/{id}', [JobController::class, 'destroy']);
+
+    // ---------- Job Applications (Admin) ----------
+    Route::get('/admin/applications', [JobController::class, 'applications']);
+    Route::put('/admin/applications/{id}', [JobController::class, 'updateApplicationStatus']);
+    Route::get('/admin/applications/{id}/download', [JobController::class, 'downloadCV']);
+
+    // ---------- Logout ----------
     Route::post('/logout', [AuthController::class, 'logout']);
 });
