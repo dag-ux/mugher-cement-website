@@ -1,8 +1,13 @@
-
-
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent, ChangeEvent } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import type { ChangeEvent } from 'react';
+import type { PanInfo } from 'framer-motion';
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useTransform,
+  useAnimationFrame,
+} from 'framer-motion';
 import API from '../services/api';
 import { Helmet } from 'react-helmet';
 import {
@@ -16,693 +21,433 @@ import {
   FaGlobeAfrica,
   FaSearch,
   FaChevronUp,
+  FaExclamationTriangle,
   FaRedo,
-  FaCalculator,
-  FaFileDownload,
-  FaTimes,
-  FaTruck,
-  FaShieldAlt,
-  FaFlask,
-  FaLayerGroup,
-  FaTable,
-  FaThLarge,
-  FaCube,
-  FaEye,
-  FaExpand,
-  FaSearchPlus,
-  FaSearchMinus,
-  FaSync,
-  FaLightbulb,
-  FaInfoCircle,
+  FaPlay,
+  FaPause,
+  FaSyncAlt,
 } from 'react-icons/fa';
 
 // Safe icon renderer
-const Icon = ({ icon: IconComponent, className, size }: { icon: any; className?: string; size?: number }) => (
+const Icon = ({ icon: IconComponent, className, size }: any) => (
   <IconComponent className={className} size={size} />
 );
 
 interface Product {
   id: number;
   name: string;
-  slug?: string;
+  slug: string;
   description: string;
   image_url: string;
   category: string;
-  grade?: string;
-  standard?: string;
   technical_specs?: Record<string, any>;
   application?: string;
 }
 
-// Default high-performance Ethiopian cement formulations
-const INITIAL_PRODUCTS: Product[] = [
-  {
-    id: 1,
-    name: 'Mugher OPC 42.5N Cement',
-    slug: 'opc-42-5n',
-    category: 'Ordinary Portland',
-    grade: 'CEM I 42.5N',
-    standard: 'ES 1177-1 / EN 197-1',
-    description:
-      'High-performance Ordinary Portland Cement engineered for heavy-duty structural concrete, high-rise construction, pre-stressed elements, and major civil engineering projects.',
-    image_url: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=800&auto=format&fit=crop',
-    application:
-      'Multi-story commercial complexes, concrete highways, bridges, dams, pre-cast concrete structures, and structural foundations requiring rapid strength gain.',
-    technical_specs: {
-      compressive_strength_2d: '≥ 20.0 MPa',
-      compressive_strength_28d: '≥ 42.5 MPa',
-      initial_setting_time: '≥ 60 min',
-      soundness: '≤ 10 mm',
-      blaine_fineness: '3,450 cm²/g',
-      clinker_content: '95% - 100%',
-    },
-  },
-  {
-    id: 2,
-    name: 'Mugher PPC 32.5R Cement',
-    slug: 'ppc-32-5r',
-    category: 'Portland Pozzolana',
-    grade: 'CEM II/B-P 32.5R',
-    standard: 'ES 1177-1 / EN 197-1',
-    description:
-      'Eco-friendly blended cement enriched with calcined pozzolana, offering superior long-term strength development, enhanced resistance to sulfate attack, and reduced thermal cracking.',
-    image_url: 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?q=80&w=800&auto=format&fit=crop',
-    application:
-      'General residential building, masonry plastering, brick laying, hydraulic structures, underground foundations, mass concrete work, and coastal developments.',
-    technical_specs: {
-      compressive_strength_2d: '≥ 10.0 MPa',
-      compressive_strength_28d: '≥ 32.5 MPa',
-      initial_setting_time: '≥ 75 min',
-      soundness: '≤ 10 mm',
-      pozzolana_content: '21% - 35%',
-      blaine_fineness: '3,800 cm²/g',
-    },
-  },
-  {
-    id: 3,
-    name: 'Mugher High Early Strength 52.5N',
-    slug: 'cem-i-52-5n',
-    category: 'Specialty Cement',
-    grade: 'CEM I 52.5N',
-    standard: 'ES 1177-1 / EN 197-1',
-    description:
-      'Ultra-high strength premium cement formulated for specialized industrial applications where rapid setting and exceptionally high early compressive strength are critical.',
-    image_url: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=800&auto=format&fit=crop',
-    application:
-      'Pre-stressed post-tensioned concrete, rapid formwork stripping, airport runways, cold-weather concreting, and high-load industrial floors.',
-    technical_specs: {
-      compressive_strength_2d: '≥ 30.0 MPa',
-      compressive_strength_28d: '≥ 52.5 MPa',
-      initial_setting_time: '≥ 45 min',
-      soundness: '≤ 10 mm',
-      blaine_fineness: '4,200 cm²/g',
-      clinker_content: '95% - 100%',
-    },
-  },
-  {
-    id: 4,
-    name: 'Mugher Sulfate Resistant Cement',
-    slug: 'cem-i-42-5n-sr3',
-    category: 'Specialty Cement',
-    grade: 'CEM I 42.5N-SR3',
-    standard: 'EN 197-1 / ASTM C150',
-    description:
-      'Specialized chemical-resistant Portland cement specifically produced with low Tricalcium Aluminate (C3A ≤ 3%) to withstand aggressive soil and saline environments.',
-    image_url: 'https://images.unsplash.com/photo-1590069261209-f8e9b8642343?q=80&w=800&auto=format&fit=crop',
-    application:
-      'Wastewater treatment plants, marine docks, sub-soil foundations in high-sulfate soil zones, underground tunnels, and industrial effluent tanks.',
-    technical_specs: {
-      compressive_strength_2d: '≥ 18.0 MPa',
-      compressive_strength_28d: '≥ 42.5 MPa',
-      c3a_content: '≤ 3.0%',
-      initial_setting_time: '≥ 90 min',
-      soundness: '≤ 10 mm',
-      sulfate_expansion: '< 0.04%',
-    },
-  },
-];
+const fadeUp = {
+  hidden: { opacity: 0, y: 40 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' as const } },
+};
 
+const SectionEyebrow = ({ label }: { label: string }) => (
+  <div className="flex items-center justify-center gap-3 mb-4">
+    <span className="h-px w-8 bg-[#2EAD32] dark:bg-[#4ADE80]" />
+    <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#2EAD32] dark:text-[#4ADE80] font-body">
+      {label}
+    </span>
+    <span className="h-px w-8 bg-[#2EAD32] dark:bg-[#4ADE80]" />
+  </div>
+);
+
+// TODO: replace with your company's real figures
 const STATS = [
   { icon: FaIndustry, value: '500,000+ MT', label: 'Annual Capacity' },
-  { icon: FaAward, value: '25+ Years', label: 'Industry Leadership' },
-  { icon: FaGlobeAfrica, value: '500+', label: 'Distribution Hubs' },
-  { icon: FaCheckCircle, value: 'ISO 9001:2015', label: 'Quality Certified' },
+  { icon: FaAward, value: '25+ Years', label: 'Industry Experience' },
+  { icon: FaGlobeAfrica, value: '50+', label: 'Distributors Nationwide' },
+  { icon: FaCheckCircle, value: 'ISO 9001', label: 'Certified Quality' },
 ];
 
-// Interactive 3D Hotspot Pins on the Cement Bag
-const HOTSPOTS = [
-  {
-    id: 'seal',
-    title: 'Ultrasonic Moisture Seal',
-    desc: 'Prevents ambient humidity absorption & clumping during extended storage.',
-    pos: { x: 0, y: 1.1, z: 0.46 },
-  },
-  {
-    id: 'grade',
-    title: 'Certified Grade Stamp',
-    desc: 'Guaranteed 28-day minimum compressive strength (ES 1177-1 compliant).',
-    pos: { x: 0, y: 0.2, z: 0.46 },
-  },
-  {
-    id: 'ply',
-    title: '5-Ply Kraft & Poly Shell',
-    desc: 'High tear-resistant woven polypropylene liner for zero dust spillage.',
-    pos: { x: 0.8, y: -0.6, z: 0.46 },
-  },
-];
-
-// ---- DYNAMIC THREE.JS 3D CANVAS COMPONENT ----------------------------------
-function Real3DProductViewer({ product, onExpand }: { product: Product; onExpand?: () => void }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [threeReady, setThreeReady] = useState(false);
-  const [autoSpin, setAutoSpin] = useState(true);
-  const [renderMode, setRenderMode] = useState<'daylight' | 'spotlight' | 'wireframe'>('daylight');
-  const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
-
-  const sceneRef = useRef<any>(null);
-  const cameraRef = useRef<any>(null);
-  const rendererRef = useRef<any>(null);
-  const bagMeshRef = useRef<any>(null);
-  const lightsGroupRef = useRef<any>(null);
-  const animFrameIdRef = useRef<number | null>(null);
-
-  // Drag interaction state
-  const isDraggingRef = useRef(false);
-  const previousMouseRef = useRef({ x: 0, y: 0 });
-  const targetRotationRef = useRef({ x: 0.15, y: 0.4 });
-  const zoomLevelRef = useRef(5);
-
-  // Load Three.js dynamically via script tag
+function useReducedMotion() {
+  const [reduced, setReduced] = useState(false);
   useEffect(() => {
-    if ((window as any).THREE) {
-      setThreeReady(true);
-      return;
-    }
-    const scriptId = 'three-js-cdn-script';
-    let script = document.getElementById(scriptId) as HTMLScriptElement;
-    if (!script) {
-      script = document.createElement('script');
-      script.id = scriptId;
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-      script.async = true;
-      script.onload = () => setThreeReady(true);
-      document.head.appendChild(script);
-    } else {
-      script.addEventListener('load', () => setThreeReady(true));
-    }
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReduced(mq.matches);
+    const handler = () => setReduced(mq.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
   }, []);
+  return reduced;
+}
 
-  // Helper to generate a high-res custom cement bag texture on an HTML5 canvas
-  const createTexture = useCallback(() => {
-    const THREE = (window as any).THREE;
-    const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 1024;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
+// Small deterministic pseudo-random generator so particles don't reshuffle on every render
+function seededRandom(seed: number) {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
 
-    // Background paper texture gradient
-    const bgGrad = ctx.createLinearGradient(0, 0, 1024, 1024);
-    bgGrad.addColorStop(0, '#e5e7eb');
-    bgGrad.addColorStop(0.5, '#d1d5db');
-    bgGrad.addColorStop(1, '#9ca3af');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, 1024, 1024);
+// ---- Cinematic Video-Style Product Showcase --------------------------------
+// A continuously auto-rotating 3D turntable inside a letterboxed "video frame",
+// with a real play/pause control, a scrub-style progress bar, a light sweep,
+// and drifting dust particles for atmosphere. Drag left/right to scrub the
+// rotation manually, just like scrubbing a video. No video file required —
+// everything here is CSS/SVG + framer-motion.
+function CinematicShowcase({
+  src,
+  alt,
+  category,
+}: {
+  src: string;
+  alt: string;
+  category: string;
+}) {
+  const prefersReduced = useReducedMotion();
+  const [isPlaying, setIsPlaying] = useState(!prefersReduced);
+  const [isDragging, setIsDragging] = useState(false);
+  const [imgSrc, setImgSrc] = useState(src);
 
-    // Green Header Band
-    ctx.fillStyle = '#059669';
-    ctx.fillRect(0, 0, 1024, 220);
+  const rotateY = useMotionValue(0);
+  const degreesPerSecond = 26;
 
-    // Top Header text
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 54px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('MUGHER CEMENT FACTORY', 512, 120);
-
-    // Navy Accent Stripe
-    ctx.fillStyle = '#0F2942';
-    ctx.fillRect(0, 220, 1024, 40);
-
-    // Main Product Title
-    ctx.fillStyle = '#0F2942';
-    ctx.font = 'black 76px sans-serif';
-    ctx.fillText(product.name.toUpperCase(), 512, 420);
-
-    // Grade Emblem Box
-    ctx.fillStyle = '#059669';
-    ctx.roundRect ? ctx.roundRect(262, 480, 500, 140, 20) : ctx.fillRect(262, 480, 500, 140);
-    ctx.fill();
-
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'extrabold 64px sans-serif';
-    ctx.fillText(product.grade || 'CEM I 42.5N', 512, 575);
-
-    // Standard & Details
-    ctx.fillStyle = '#374151';
-    ctx.font = 'bold 36px sans-serif';
-    ctx.fillText(product.standard || 'ES 1177-1 / EN 197-1', 512, 700);
-
-    // 50 KG Weight stamp
-    ctx.fillStyle = '#dc2626';
-    ctx.font = 'extrabold 52px sans-serif';
-    ctx.fillText('NET WEIGHT: 50 KG', 512, 820);
-
-    // Bottom Barcode & ISO motif
-    ctx.fillStyle = '#111827';
-    for (let x = 312; x < 712; x += 12) {
-      const w = (x % 5 === 0) ? 6 : 3;
-      ctx.fillRect(x, 880, w, 80);
+  // Drive the turntable rotation every frame when playing and not being dragged
+  useAnimationFrame((_, delta) => {
+    if (isPlaying && !isDragging) {
+      rotateY.set(rotateY.get() + (degreesPerSecond * delta) / 1000);
     }
+  });
 
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.needsUpdate = true;
-    return texture;
-  }, [product]);
+  // 0–100% progress bar mapped from the current rotation angle
+  const progress = useTransform(rotateY, (v) => (((v % 360) + 360) % 360 / 360) * 100);
+  const progressWidth = useTransform(progress, (v) => `${v}%`);
 
-  // Initialize Three.js Scene
-  useEffect(() => {
-    if (!threeReady || !containerRef.current) return;
-    const THREE = (window as any).THREE;
+  const handlePan = useCallback(
+    (_: unknown, info: PanInfo) => {
+      rotateY.set(rotateY.get() + info.delta.x * 0.6);
+    },
+    [rotateY]
+  );
 
-    const width = containerRef.current.clientWidth;
-    const height = containerRef.current.clientHeight;
-
-    // Scene setup
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
-
-    // Camera setup
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    camera.position.set(0, 0.5, zoomLevelRef.current);
-    cameraRef.current = camera;
-
-    // Renderer setup
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-    containerRef.current.innerHTML = '';
-    containerRef.current.appendChild(renderer.domElement);
-    rendererRef.current = renderer;
-
-    // Lighting Setup
-    const lightsGroup = new THREE.Group();
-    scene.add(lightsGroup);
-    lightsGroupRef.current = lightsGroup;
-
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
-    lightsGroup.add(ambientLight);
-
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-    dirLight.position.set(5, 8, 5);
-    dirLight.castShadow = true;
-    lightsGroup.add(dirLight);
-
-    const rimLight = new THREE.DirectionalLight(0x4ade80, 1.5);
-    rimLight.position.set(-5, 2, -5);
-    lightsGroup.add(rimLight);
-
-    // Reflective Studio Floor Grid
-    const floorGeo = new THREE.PlaneGeometry(20, 20);
-    const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x1e293b,
-      roughness: 0.4,
-      metalness: 0.2,
-      side: THREE.DoubleSide,
-    });
-    const floor = new THREE.Mesh(floorGeo, floorMat);
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.y = -1.6;
-    floor.receiveShadow = true;
-    scene.add(floor);
-
-    // Build Rounded 3D Cement Bag Mesh
-    const bagGeo = new THREE.BoxGeometry(2.2, 3.0, 0.9, 32, 32, 32);
-
-    // Deform vertices slightly to create a realistic bulged bag appearance
-    const pos = bagGeo.attributes.position;
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i);
-      const y = pos.getY(i);
-      const z = pos.getZ(i);
-
-      // Radial bulging factor in middle section
-      const bulge = Math.cos((y / 3.0) * Math.PI) * 0.15;
-      if (Math.abs(z) > 0.1) {
-        pos.setZ(i, z + Math.sign(z) * bulge);
-      }
-    }
-    bagGeo.computeVertexNormals();
-
-    const bagTexture = createTexture();
-    const bagMat = new THREE.MeshStandardMaterial({
-      map: bagTexture,
-      roughness: 0.6,
-      metalness: 0.1,
-      wireframe: renderMode === 'wireframe',
-    });
-
-    const bagMesh = new THREE.Mesh(bagGeo, bagMat);
-    bagMesh.position.y = 0.1;
-    bagMesh.castShadow = true;
-    scene.add(bagMesh);
-    bagMeshRef.current = bagMesh;
-
-    // Render loop
-    const animate = () => {
-      animFrameIdRef.current = requestAnimationFrame(animate);
-
-      if (bagMeshRef.current) {
-        if (autoSpin && !isDraggingRef.current) {
-          targetRotationRef.current.y += 0.008;
-        }
-
-        // Smooth rotation interpolation (Damping)
-        bagMeshRef.current.rotation.y += (targetRotationRef.current.y - bagMeshRef.current.rotation.y) * 0.1;
-        bagMeshRef.current.rotation.x += (targetRotationRef.current.x - bagMeshRef.current.rotation.x) * 0.1;
-
-        // Subtle idle floating bobbing motion
-        bagMeshRef.current.position.y = 0.1 + Math.sin(Date.now() * 0.002) * 0.08;
-      }
-
-      if (cameraRef.current) {
-        cameraRef.current.position.z += (zoomLevelRef.current - cameraRef.current.position.z) * 0.1;
-      }
-
-      renderer.render(scene, camera);
-    };
-
-    animate();
-
-    // Resize handler
-    const handleResize = () => {
-      if (!containerRef.current || !rendererRef.current || !cameraRef.current) return;
-      const w = containerRef.current.clientWidth;
-      const h = containerRef.current.clientHeight;
-      cameraRef.current.aspect = w / h;
-      cameraRef.current.updateProjectionMatrix();
-      rendererRef.current.setSize(w, h);
-    };
-
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
-      if (rendererRef.current && rendererRef.current.domElement) {
-        rendererRef.current.domElement.remove();
-      }
-    };
-  }, [threeReady, createTexture]);
-
-  // Update wireframe / render mode dynamically
-  useEffect(() => {
-    if (!bagMeshRef.current) return;
-    bagMeshRef.current.material.wireframe = renderMode === 'wireframe';
-  }, [renderMode]);
-
-  // Mouse & Touch Drag Handlers
-  const handlePointerDown = (e: ReactMouseEvent | ReactTouchEvent) => {
-    isDraggingRef.current = true;
-    const clientX = 'touches' in e ? e.touches[0].clientX : (e as ReactMouseEvent).clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : (e as ReactMouseEvent).clientY;
-    previousMouseRef.current = { x: clientX, y: clientY };
-  };
-
-  const handlePointerMove = (e: ReactMouseEvent | ReactTouchEvent) => {
-    if (!isDraggingRef.current) return;
-    const clientX = 'touches' in e ? e.touches[0].clientX : (e as ReactMouseEvent).clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : (e as ReactMouseEvent).clientY;
-
-    const deltaX = clientX - previousMouseRef.current.x;
-    const deltaY = clientY - previousMouseRef.current.y;
-
-    targetRotationRef.current.y += deltaX * 0.01;
-    targetRotationRef.current.x += deltaY * 0.008;
-
-    // Clamp X rotation angle so bag doesn't flip upside down
-    targetRotationRef.current.x = Math.max(-0.6, Math.min(0.6, targetRotationRef.current.x));
-
-    previousMouseRef.current = { x: clientX, y: clientY };
-  };
-
-  const handlePointerUp = () => {
-    isDraggingRef.current = false;
-  };
-
-  const handleZoom = (delta: number) => {
-    zoomLevelRef.current = Math.max(3.2, Math.min(7.5, zoomLevelRef.current + delta));
-  };
-
-  const resetView = () => {
-    targetRotationRef.current = { x: 0.15, y: 0.4 };
-    zoomLevelRef.current = 5;
-  };
+  const particles = useMemo(
+    () =>
+      Array.from({ length: 16 }, (_, i) => ({
+        id: i,
+        left: seededRandom(i * 3.1) * 100,
+        top: seededRandom(i * 7.7) * 100,
+        size: 2 + seededRandom(i * 5.3) * 3,
+        duration: 4 + seededRandom(i * 2.9) * 5,
+        delay: seededRandom(i * 1.7) * 4,
+      })),
+    []
+  );
 
   return (
-    <div className="relative w-full h-[360px] md:h-[440px] bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl group select-none">
-      {/* 3D WebGL Canvas Container */}
+    <div className="relative w-full">
+      {/* Cinema frame */}
       <div
-        ref={containerRef}
-        onMouseDown={handlePointerDown}
-        onMouseMove={handlePointerMove}
-        onMouseUp={handlePointerUp}
-        onTouchStart={handlePointerDown}
-        onTouchMove={handlePointerMove}
-        onTouchEnd={handlePointerUp}
-        className="w-full h-full cursor-grab active:cursor-grabbing"
-      />
+        className="group relative w-full aspect-video rounded-2xl overflow-hidden bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 shadow-inner ring-1 ring-black/40 select-none touch-pan-y"
+        onPointerDown={() => setIsDragging(true)}
+        onPointerUp={() => setIsDragging(false)}
+        onPointerLeave={() => setIsDragging(false)}
+      >
+        {/* ambient vignette */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-20"
+          style={{
+            background:
+              'radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.55) 100%)',
+          }}
+        />
 
-      {/* Fallback indicator while Three.js initializes */}
-      {!threeReady && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 text-white space-y-3">
-          <Icon icon={FaCube} className="animate-spin text-[#4ADE80]" size={36} />
-          <span className="text-xs font-mono text-gray-400">Loading Interactive 3D Engine...</span>
+        {/* drifting dust particles */}
+        {particles.map((p) => (
+          <motion.span
+            key={p.id}
+            aria-hidden="true"
+            className="pointer-events-none absolute rounded-full bg-white/30"
+            style={{
+              left: `${p.left}%`,
+              top: `${p.top}%`,
+              width: p.size,
+              height: p.size,
+            }}
+            animate={
+              isPlaying
+                ? { y: [0, -14, 0], opacity: [0.15, 0.6, 0.15] }
+                : { opacity: 0.15 }
+            }
+            transition={{
+              repeat: Infinity,
+              duration: p.duration,
+              delay: p.delay,
+              ease: 'easeInOut',
+            }}
+          />
+        ))}
+
+        {/* light sweep across the frame */}
+        <motion.div
+          aria-hidden="true"
+          className="pointer-events-none absolute top-0 bottom-0 w-1/3 z-10"
+          style={{
+            background:
+              'linear-gradient(100deg, transparent, rgba(255,255,255,0.10) 45%, transparent 90%)',
+          }}
+          animate={isPlaying ? { left: ['-40%', '130%'] } : { left: '-40%' }}
+          transition={{ repeat: Infinity, duration: 3.2, ease: 'easeInOut', repeatDelay: 1.4 }}
+        />
+
+        {/* turntable stage */}
+        <div className="absolute inset-0 flex items-center justify-center [perspective:1400px]">
+          <motion.div
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0}
+            onPan={handlePan}
+            style={{ rotateY, transformStyle: 'preserve-3d' }}
+            className="relative w-2/3 h-2/3 flex items-center justify-center cursor-grab active:cursor-grabbing"
+          >
+            <img
+              src={imgSrc}
+              alt={alt}
+              draggable={false}
+              className="w-full h-full object-contain drop-shadow-[0_25px_25px_rgba(0,0,0,0.55)]"
+              onError={() => setImgSrc('https://via.placeholder.com/500x500?text=Cement+Product')}
+            />
+          </motion.div>
+
+          {/* grounded turntable disc */}
+          <div
+            aria-hidden="true"
+            className="absolute bottom-[14%] w-1/2 h-3 rounded-full bg-black/50 blur-md"
+          />
         </div>
-      )}
 
-      {/* 3D Hotspot Overlay Badges */}
-      {threeReady && (
-        <div className="absolute inset-0 pointer-events-none p-4 flex flex-col justify-between">
-          <div className="flex items-center justify-between pointer-events-auto">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-black/60 backdrop-blur-md rounded-full border border-white/10 text-white text-xs font-mono">
-              <Icon icon={FaCube} className="text-[#4ADE80]" />
-              <span>360° Real-time 3D Stage</span>
-            </div>
+        {/* letterbox bars for the cinematic feel */}
+        <div aria-hidden="true" className="absolute top-0 inset-x-0 h-[6%] bg-black z-20" />
+        <div aria-hidden="true" className="absolute bottom-0 inset-x-0 h-[6%] bg-black z-20" />
 
-            {onExpand && (
-              <button
-                onClick={onExpand}
-                className="p-2 rounded-xl bg-black/60 backdrop-blur-md text-white border border-white/10 hover:bg-white/20 transition-all"
-                title="Fullscreen 3D Studio"
-              >
-                <Icon icon={FaExpand} size={14} />
-              </button>
-            )}
+        {/* top-left REC badge */}
+        <div className="absolute top-3 left-4 z-30 flex items-center gap-1.5">
+          <motion.span
+            aria-hidden="true"
+            className="w-1.5 h-1.5 rounded-full bg-red-500"
+            animate={isPlaying ? { opacity: [1, 0.25, 1] } : { opacity: 0.4 }}
+            transition={{ repeat: Infinity, duration: 1.4 }}
+          />
+          <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/80 font-body">
+            360° Live View
+          </span>
+        </div>
+
+        {/* top-right category badge */}
+        <span className="absolute top-3 right-4 z-30 text-[10px] font-bold tracking-[0.2em] uppercase text-white/60 font-body">
+          {category || 'Cement'}
+        </span>
+
+        {/* bottom video-player control bar */}
+        <div className="absolute bottom-[8%] inset-x-0 z-30 px-4 flex items-center gap-3 opacity-90">
+          <button
+            type="button"
+            onClick={() => setIsPlaying((p) => !p)}
+            aria-label={isPlaying ? 'Pause rotation' : 'Play rotation'}
+            className="flex-shrink-0 w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-sm flex items-center justify-center text-white transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4ADE80]"
+          >
+            <Icon icon={isPlaying ? FaPause : FaPlay} size={11} />
+          </button>
+
+          <div className="relative flex-1 h-1 rounded-full bg-white/20 overflow-hidden">
+            <motion.div
+              className="absolute inset-y-0 left-0 bg-[#4ADE80] rounded-full"
+              style={{ width: progressWidth }}
+            />
           </div>
 
-          {/* Hotspot Floating Pin Callout */}
-          {HOTSPOTS.map((spot) => (
-            <div key={spot.id} className="absolute left-6 bottom-16 pointer-events-auto z-10">
-              <button
-                onClick={() => setActiveHotspot(activeHotspot === spot.id ? null : spot.id)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all shadow-lg border ${
-                  activeHotspot === spot.id
-                    ? 'bg-[#4ADE80] text-gray-950 border-[#4ADE80]'
-                    : 'bg-black/70 text-white border-white/20 hover:bg-black'
-                }`}
-              >
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                <Icon icon={FaInfoCircle} />
-                <span>{spot.title}</span>
-              </button>
-
-              {activeHotspot === spot.id && (
-                <motion.div
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-2 p-3 bg-slate-900/95 border border-emerald-500/40 rounded-xl text-xs text-gray-200 max-w-xs backdrop-blur-md shadow-2xl"
-                >
-                  <p className="font-semibold text-emerald-400 mb-1">{spot.title}</p>
-                  <p className="text-[11px] leading-relaxed text-gray-300">{spot.desc}</p>
-                </motion.div>
-              )}
-            </div>
-          ))}
-
-          {/* Interactive Control Toolbar */}
-          <div className="pointer-events-auto flex items-center justify-between bg-black/70 backdrop-blur-md px-3 py-2 rounded-xl border border-white/10">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setAutoSpin(!autoSpin)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  autoSpin ? 'bg-[#4ADE80] text-gray-950' : 'bg-white/10 text-gray-300'
-                }`}
-                title="Toggle Auto 360 Spin"
-              >
-                <Icon icon={FaSync} className={autoSpin ? 'animate-spin' : ''} size={11} />
-                <span>Auto-Spin</span>
-              </button>
-
-              <button
-                onClick={() =>
-                  setRenderMode(renderMode === 'daylight' ? 'wireframe' : 'daylight')
-                }
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  renderMode === 'wireframe' ? 'bg-amber-400 text-gray-950' : 'bg-white/10 text-gray-300'
-                }`}
-                title="Toggle Render Mode"
-              >
-                <Icon icon={FaLightbulb} size={11} />
-                <span>{renderMode === 'wireframe' ? 'Mesh Mode' : 'Studio Mode'}</span>
-              </button>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => handleZoom(-0.5)}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white"
-                title="Zoom In"
-              >
-                <Icon icon={FaSearchPlus} size={12} />
-              </button>
-              <button
-                onClick={() => handleZoom(0.5)}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white"
-                title="Zoom Out"
-              >
-                <Icon icon={FaSearchMinus} size={12} />
-              </button>
-              <button
-                onClick={resetView}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white"
-                title="Reset Camera Angle"
-              >
-                <Icon icon={FaRedo} size={12} />
-              </button>
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={() => rotateY.set(0)}
+            aria-label="Reset rotation"
+            className="flex-shrink-0 w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-sm flex items-center justify-center text-white transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4ADE80]"
+          >
+            <Icon icon={FaSyncAlt} size={11} />
+          </button>
         </div>
-      )}
+      </div>
+
+      <p className="text-center text-[11px] text-gray-400 dark:text-gray-500 font-body mt-2 tracking-wide">
+        Drag to rotate · Tap play to auto-spin
+      </p>
     </div>
   );
 }
+// -----------------------------------------------------------------------------
 
-// ---- Product Card Component with Integrated 3D Visualizer ------------------
-function ProductCard({
-  product,
-  index,
-  onOpenSpecs,
-  onOpenQuote,
-  onOpenFullscreen3D,
-}: {
-  product: Product;
-  index: number;
-  onOpenSpecs: (product: Product) => void;
-  onOpenQuote: (product: Product) => void;
-  onOpenFullscreen3D: (product: Product) => void;
-}) {
-  const specEntries = product.technical_specs ? Object.entries(product.technical_specs) : [];
+function ProductCard({ product, index }: { product: Product; index: number }) {
+  const specEntries = product.technical_specs
+    ? Object.entries(product.technical_specs)
+    : [];
   const reversed = index % 2 === 1;
+
+  const keyFeatures = [
+    'High compressive strength for structural integrity',
+    'Excellent workability and setting time',
+    'Suitable for all weather conditions',
+    'Meets Ethiopian and international standards',
+    'Environmentally friendly production process',
+  ];
+
+  const benefits = [
+    'Reduces construction time with faster setting',
+    'Ensures long‑lasting durability',
+    'Cost‑effective solution for large projects',
+    'Consistent quality batch after batch',
+  ];
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-xl dark:shadow-gray-950/50 hover:shadow-2xl transition-all duration-500 overflow-hidden border border-slate-200/80 dark:border-gray-700"
+      variants={fadeUp}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.2 }}
+      className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-lg dark:shadow-gray-900/50 hover:shadow-2xl dark:hover:shadow-gray-900/70 transition-shadow duration-500 overflow-hidden border border-slate-100/80 dark:border-gray-700"
     >
+      <span
+        aria-hidden="true"
+        className="pointer-events-none select-none absolute top-2 right-4 text-8xl font-heading font-black text-[#1A3C91]/5 dark:text-white/5 leading-none"
+      >
+        {String(index + 1).padStart(2, '0')}
+      </span>
+
       <div
-        className={`grid grid-cols-1 lg:grid-cols-12 gap-8 p-6 md:p-8 relative ${
+        className={`grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 md:p-10 relative ${
           reversed ? 'lg:[&>*:first-child]:order-2' : ''
         }`}
       >
-        {/* 3D WebGL Showcase Canvas Stage */}
-        <div className="lg:col-span-6 flex flex-col justify-between bg-slate-900 rounded-2xl p-3 border border-slate-800">
-          <Real3DProductViewer
-            product={product}
-            onExpand={() => onOpenFullscreen3D(product)}
+        {/* Cinematic Showcase */}
+        <div className="flex flex-col justify-center">
+          <CinematicShowcase
+            src={product.image_url || '/placeholder.jpg'}
+            alt={product.name}
+            category={product.category}
           />
-
-          <div className="pt-3 px-2 flex items-center justify-between text-xs text-gray-400 font-mono">
-            <span className="flex items-center gap-1.5 text-emerald-400">
-              <Icon icon={FaShieldAlt} /> {product.standard || 'ISO 9001 Certified'}
-            </span>
-            <span>Drag mouse to orbit 360°</span>
-          </div>
         </div>
 
-        {/* Product Details Panel */}
-        <div className="lg:col-span-6 flex flex-col justify-between space-y-5">
+        {/* Product Details */}
+        <div className="space-y-6">
           <div>
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#1A3C91]/10 dark:bg-[#4A7DB4]/20 text-[#1A3C91] dark:text-[#4A7DB4] text-xs font-bold rounded-full">
-                <Icon icon={FaLayerGroup} className="text-xs" />
-                {product.category}
+            <div className="flex items-center gap-2 mb-2">
+              <span className="inline-block px-3 py-1 bg-[#1A3C91]/10 dark:bg-[#4A7DB4]/20 text-[#1A3C91] dark:text-[#4A7DB4] text-xs font-bold rounded-full">
+                {product.category || 'Cement'}
               </span>
-              {product.grade && (
-                <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-md border border-emerald-500/20 font-mono">
-                  {product.grade}
-                </span>
-              )}
+              <span className="text-xs font-bold tracking-widest text-gray-400 dark:text-gray-500 font-body">
+                No. {String(index + 1).padStart(2, '0')}
+              </span>
             </div>
-
-            <h2 className="text-2xl md:text-3xl font-heading font-extrabold text-[#1A3C91] dark:text-white mb-2">
+            <h2 className="text-3xl md:text-4xl font-heading font-bold text-[#1A3C91] dark:text-white mb-3 tracking-tight">
               {product.name}
             </h2>
-            <p className="text-gray-600 dark:text-gray-300 font-body text-xs md:text-sm leading-relaxed">
+            <p className="text-gray-700 dark:text-gray-300 font-body leading-relaxed">
               {product.description}
             </p>
           </div>
 
-          {/* Applications */}
+          <div>
+            <h3 className="text-lg font-heading font-bold text-[#1A3C91] dark:text-white flex items-center gap-2 mb-2">
+              <Icon icon={FaStar} className="text-[#2EAD32] dark:text-[#4ADE80]" />
+              Key Features
+            </h3>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              {keyFeatures.map((feature, idx) => (
+                <li
+                  key={idx}
+                  className="flex items-start gap-2 text-gray-700 dark:text-gray-300 font-body text-sm"
+                >
+                  <Icon
+                    icon={FaCheckCircle}
+                    className="text-[#2EAD32] dark:text-[#4ADE80] mt-0.5 flex-shrink-0"
+                  />
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-heading font-bold text-[#1A3C91] dark:text-white flex items-center gap-2 mb-2">
+              <Icon icon={FaCheckCircle} className="text-[#2EAD32] dark:text-[#4ADE80]" />
+              Benefits
+            </h3>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              {benefits.map((benefit, idx) => (
+                <li
+                  key={idx}
+                  className="flex items-start gap-2 text-gray-700 dark:text-gray-300 font-body text-sm"
+                >
+                  <Icon
+                    icon={FaCheckCircle}
+                    className="text-[#2EAD32] dark:text-[#4ADE80] mt-0.5 flex-shrink-0"
+                  />
+                  <span>{benefit}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           {product.application && (
             <div>
-              <h3 className="text-xs font-heading font-bold uppercase tracking-wider text-[#1A3C91] dark:text-gray-200 flex items-center gap-2 mb-2">
+              <h3 className="text-lg font-heading font-bold text-[#1A3C91] dark:text-white flex items-center gap-2 mb-2">
                 <Icon icon={FaClipboardList} className="text-[#2EAD32] dark:text-[#4ADE80]" />
-                Recommended Applications
+                Applications
               </h3>
-              <div className="bg-slate-50 dark:bg-gray-900/40 rounded-xl border border-slate-200 dark:border-gray-700/80 p-3 text-xs text-gray-700 dark:text-gray-300">
-                {product.application}
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-xl border border-slate-200 dark:border-gray-600 p-4">
+                <p className="text-gray-700 dark:text-gray-300 font-body leading-relaxed text-sm">
+                  {product.application}
+                </p>
               </div>
             </div>
           )}
 
-          {/* Spec Summary */}
           {specEntries.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {specEntries.slice(0, 3).map(([key, val]) => (
-                <div key={key} className="bg-slate-100 dark:bg-gray-700/60 p-2.5 rounded-xl border border-slate-200 dark:border-gray-600">
-                  <span className="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 capitalize">
-                    {key.replace(/_/g, ' ')}
-                  </span>
-                  <span className="text-xs font-bold text-gray-900 dark:text-white font-mono">
-                    {String(val)}
-                  </span>
-                </div>
-              ))}
+            <div>
+              <h3 className="text-lg font-heading font-bold text-[#1A3C91] dark:text-white flex items-center gap-2 mb-2">
+                <Icon icon={FaTools} className="text-[#2EAD32] dark:text-[#4ADE80]" />
+                Technical Specifications
+              </h3>
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-xl border border-slate-200 dark:border-gray-600 overflow-x-auto">
+                <table className="w-full text-sm font-body">
+                  <tbody>
+                    {specEntries.map(([key, value], idx) => (
+                      <tr
+                        key={key}
+                        className={`border-b border-slate-200 dark:border-gray-600 last:border-0 ${
+                          idx % 2 === 0
+                            ? 'bg-white dark:bg-gray-800'
+                            : 'bg-gray-50/50 dark:bg-gray-700/50'
+                        }`}
+                      >
+                        <td className="px-4 py-2 font-semibold text-[#1A3C91] dark:text-[#4A7DB4] capitalize w-1/3 whitespace-nowrap">
+                          {key.replace(/_/g, ' ')}
+                        </td>
+                        <td className="px-4 py-2 text-gray-700 dark:text-gray-300 w-2/3">
+                          {typeof value === 'object'
+                            ? JSON.stringify(value, null, 2)
+                            : String(value)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
-          {/* Toolbar Actions */}
-          <div className="pt-3 border-t border-slate-200 dark:border-gray-700 flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => onOpenQuote(product)}
-              className="inline-flex items-center justify-center gap-2 bg-[#2EAD32] hover:bg-[#259329] text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-md transition-all"
+          <div className="pt-4">
+            
+              <a href="/contact"
+              className="inline-flex items-center justify-center gap-2 bg-[#2EAD32] hover:bg-[#278f2b] dark:bg-[#4ADE80] dark:hover:bg-[#3fc972] text-white dark:text-gray-900 px-6 py-3 rounded-lg font-semibold transition-colors duration-200 shadow-md"
             >
               <Icon icon={FaEnvelope} />
-              Request Bulk Quote
-            </button>
-
-            <button
-              onClick={() => onOpenSpecs(product)}
-              className="inline-flex items-center justify-center gap-2 bg-slate-100 dark:bg-gray-700 hover:bg-slate-200 text-gray-800 dark:text-gray-100 px-4 py-2.5 rounded-xl font-semibold text-xs border border-slate-300 dark:border-gray-600 transition-all"
-            >
-              <Icon icon={FaFlask} />
-              Full Datasheet
-            </button>
+              Request a Quote
+            </a>
           </div>
         </div>
       </div>
@@ -710,104 +455,20 @@ function ProductCard({
   );
 }
 
-// ---- Concrete Estimator Widget ---------------------------------------------
-function CementCalculator() {
-  const [volume, setVolume] = useState<number>(15);
-  const [mixType, setMixType] = useState<'structural' | 'residential' | 'plaster'>('structural');
-
-  const estimate = useMemo(() => {
-    const factor = mixType === 'structural' ? 7.8 : mixType === 'residential' ? 6.4 : 5.0;
-    const bags = Math.ceil(volume * factor);
-    const tons = (bags * 50) / 1000;
-    return { bags, tons };
-  }, [volume, mixType]);
-
-  return (
-    <div className="bg-gradient-to-r from-[#0F2942] via-[#1A3C91] to-[#0F4229] rounded-3xl text-white p-6 md:p-8 shadow-2xl mb-12">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-        <div className="lg:col-span-5 space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-xs font-semibold text-[#4ADE80]">
-            <Icon icon={FaCalculator} />
-            Construction Batch Estimator
-          </div>
-          <h3 className="text-2xl font-heading font-extrabold">Concrete & Cement Calculator</h3>
-          <p className="text-xs text-gray-300 leading-relaxed">
-            Estimate required 50kg bag quantities and bulk metric tons based on structural cubic volume.
-          </p>
-        </div>
-
-        <div className="lg:col-span-7 bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/15 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-200 mb-1">
-                Volume (m³)
-              </label>
-              <input
-                type="number"
-                min="1"
-                value={volume}
-                onChange={(e) => setVolume(Math.max(1, Number(e.target.value)))}
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white font-mono font-bold focus:ring-2 focus:ring-[#4ADE80] outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-200 mb-1">
-                Mix Specification
-              </label>
-              <select
-                value={mixType}
-                onChange={(e) => setMixType(e.target.value as any)}
-                className="w-full bg-slate-900 border border-white/20 rounded-xl px-3 py-2 text-white text-xs font-semibold outline-none"
-              >
-                <option value="structural">C25/C30 Structural (OPC 42.5N)</option>
-                <option value="residential">C15/C20 Residential (PPC 32.5R)</option>
-                <option value="plaster">Masonry & Mortar Plaster</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 pt-3 border-t border-white/10 text-center">
-            <div className="bg-black/30 rounded-xl p-2.5">
-              <span className="block text-[11px] text-gray-300">50kg Bags</span>
-              <span className="text-2xl font-extrabold text-[#4ADE80] font-mono">{estimate.bags}</span>
-            </div>
-            <div className="bg-black/30 rounded-xl p-2.5">
-              <span className="block text-[11px] text-gray-300">Tonnage</span>
-              <span className="text-2xl font-extrabold text-white font-mono">{estimate.tons.toFixed(1)} MT</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ---- Main Page Component ---------------------------------------------------
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [search, setSearch] = useState('');
   const [showTopBtn, setShowTopBtn] = useState(false);
-  const [viewMode, setViewMode] = useState<'cards' | 'matrix'>('cards');
-
-  // Active Modals
-  const [activeSpecProduct, setActiveSpecProduct] = useState<Product | null>(null);
-  const [activeQuoteProduct, setActiveQuoteProduct] = useState<Product | null>(null);
-  const [fullscreen3DProduct, setFullscreen3DProduct] = useState<Product | null>(null);
 
   const fetchProducts = useCallback(() => {
     setLoading(true);
+    setError(false);
     API.get('/products')
-      .then((res) => {
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          setProducts(res.data);
-        } else {
-          setProducts(INITIAL_PRODUCTS);
-        }
-      })
-      .catch(() => setProducts(INITIAL_PRODUCTS))
+      .then((res) => setProducts(res.data ?? []))
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -816,7 +477,8 @@ export default function Products() {
   }, [fetchProducts]);
 
   useEffect(() => {
-    const handleScroll = () => setShowTopBtn(window.scrollY > 400);
+    const handleScroll = () => setShowTopBtn(window.scrollY > 500);
+    handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -829,51 +491,85 @@ export default function Products() {
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
-      const matchesSearch =
-        p.name.toLowerCase().includes(search.trim().toLowerCase()) ||
-        p.description.toLowerCase().includes(search.trim().toLowerCase());
+      const matchesSearch = p.name.toLowerCase().includes(search.trim().toLowerCase());
       return matchesCategory && matchesSearch;
     });
   }, [products, selectedCategory, search]);
 
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value);
+
   return (
-    <div className="bg-slate-50 dark:bg-gray-900 min-h-screen font-body transition-colors duration-300">
+    <div className="bg-white dark:bg-gray-900 min-h-screen transition-colors duration-300">
       <Helmet>
-        <title>3D Interactive Products Showcase | Mugher Cement</title>
+        <title>Products | Mugher Cement</title>
         <meta
           name="description"
-          content="Interactive 3D product showcase for Mugher Cement's OPC, PPC, and specialized industrial cement formulations."
+          content="Explore Mugher Cement's premium product range – OPC, PPC, and specialty cements for all construction needs."
         />
       </Helmet>
 
-      {/* Hero Header */}
-      <div className="relative bg-gradient-to-r from-[#0F2942] via-[#1A3C91] to-[#0F4229] pt-20 md:pt-28 pb-28 md:pb-36 overflow-hidden">
+      {/* Hero Banner */}
+      <div className="relative bg-gradient-to-r from-[#1A3C91] to-[#2EAD32] pt-16 md:pt-24 pb-24 md:pb-32 overflow-hidden">
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_30%_50%,_#fff_1px,transparent_1px)] [background-size:24px_24px]" />
+        <motion.div
+          aria-hidden="true"
+          className="hidden md:block absolute -top-10 right-16 w-40 h-40 rounded-full bg-white/10 blur-2xl"
+          animate={{ y: [0, 20, 0], x: [0, -10, 0] }}
+          transition={{ repeat: Infinity, duration: 6, ease: 'easeInOut' }}
+        />
+        <motion.div
+          aria-hidden="true"
+          className="hidden md:block absolute bottom-0 left-10 w-56 h-56 rounded-full bg-white/5 blur-3xl"
+          animate={{ y: [0, -15, 0], x: [0, 15, 0] }}
+          transition={{ repeat: Infinity, duration: 8, ease: 'easeInOut' }}
+        />
+
         <div className="container mx-auto px-6 text-center text-white relative z-10">
-          <div className="inline-flex items-center gap-2 border border-white/30 bg-white/10 px-4 py-1.5 rounded-full mb-4">
-            <Icon icon={FaCube} className="text-[#4ADE80] text-xs" />
-            <span className="text-xs font-bold uppercase tracking-[0.25em]">Interactive 3D Catalog</span>
-          </div>
-
-          <h1 className="text-4xl md:text-6xl font-heading font-black tracking-tight max-w-4xl mx-auto">
-            Industrial Cement 3D Showcase
-          </h1>
-
-          <p className="text-base md:text-xl text-gray-200 max-w-2xl mx-auto mt-4 leading-relaxed">
-            Inspect our cement products in interactive 360° 3D stages. Certified to ES 1177-1 and EN 197-1 standards.
-          </p>
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="inline-flex items-center gap-2 border border-white/50 px-4 py-1.5 mb-5"
+            style={{ boxShadow: 'inset 0 0 0 3px rgba(255,255,255,0.15)' }}
+          >
+            <Icon icon={FaIndustry} className="text-xs" />
+            <span className="text-xs font-bold uppercase tracking-[0.25em] font-body">
+              Engineered Cement Solutions
+            </span>
+          </motion.div>
+          <motion.h1
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="text-4xl md:text-5xl lg:text-6xl font-heading font-extrabold tracking-tight"
+          >
+            Our Products
+          </motion.h1>
+          <motion.p
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="text-lg md:text-xl text-gray-200 font-body max-w-2xl mx-auto mt-5 leading-relaxed"
+          >
+            Premium cement formulations engineered for strength, durability, and
+            performance — built for Ethiopia's roads, bridges, and homes.
+          </motion.p>
         </div>
       </div>
 
-      {/* Performance Stats */}
-      <div className="container mx-auto px-6 relative z-20 -mt-14 mb-10">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-slate-200 dark:border-gray-700 grid grid-cols-2 md:grid-cols-4 divide-x divide-slate-100 dark:divide-gray-700">
+      {/* Trust / stats strip */}
+      <div className="container mx-auto px-6 relative z-10 -mt-14 md:-mt-16 mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:shadow-gray-900/60 border border-slate-100 dark:border-gray-700 grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-slate-100 dark:divide-gray-700">
           {STATS.map((stat) => (
-            <div key={stat.label} className="flex flex-col items-center justify-center text-center gap-1 py-5 px-3">
+            <div
+              key={stat.label}
+              className="flex flex-col items-center justify-center text-center gap-1.5 py-6 px-3"
+            >
               <Icon icon={stat.icon} className="text-[#2EAD32] dark:text-[#4ADE80]" size={22} />
-              <span className="text-xl font-heading font-bold text-[#1A3C91] dark:text-white font-mono">
+              <span className="text-lg md:text-xl font-heading font-bold text-[#1A3C91] dark:text-white">
                 {stat.value}
               </span>
-              <span className="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">
+              <span className="text-[11px] md:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-body">
                 {stat.label}
               </span>
             </div>
@@ -881,23 +577,20 @@ export default function Products() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-6 pb-24">
-        {/* Estimator Tool */}
-        <CementCalculator />
-
-        {/* Filter Controls Bar */}
-        <div className="sticky top-4 z-30 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl shadow-lg border border-slate-200 dark:border-gray-700 p-4 mb-10">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-2">
+      {/* Category Filters + Search */}
+      {!loading && !error && products.length > 0 && (
+        <div className="sticky top-0 z-20 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-slate-200 dark:border-gray-700 py-4">
+          <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center justify-center gap-2">
               {categories.map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  aria-pressed={selectedCategory === cat}
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold font-body transition-colors border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2EAD32] ${
                     selectedCategory === cat
-                      ? 'bg-[#1A3C91] text-white shadow-md'
-                      : 'bg-slate-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                      ? 'bg-[#1A3C91] border-[#1A3C91] text-white dark:bg-[#4A7DB4] dark:border-[#4A7DB4]'
+                      : 'bg-transparent border-slate-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-[#2EAD32] hover:text-[#2EAD32] dark:hover:text-[#4ADE80]'
                   }`}
                 >
                   {cat}
@@ -905,241 +598,110 @@ export default function Products() {
               ))}
             </div>
 
-            <div className="flex items-center gap-3 w-full lg:w-auto">
-              <div className="relative flex-grow lg:w-64">
-                <Icon icon={FaSearch} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search 3D catalog..."
-                  className="w-full pl-9 pr-4 py-2 rounded-xl text-xs bg-slate-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 outline-none"
-                />
-              </div>
+            <div className="relative w-full md:w-64 flex-shrink-0">
+              <Icon
+                icon={FaSearch}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                size={14}
+              />
+              <input
+                type="text"
+                value={search}
+                onChange={handleSearchChange}
+                placeholder="Search products..."
+                aria-label="Search products"
+                className="w-full pl-9 pr-3 py-2 rounded-full text-sm bg-slate-100 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2EAD32] font-body"
+              />
+            </div>
+          </div>
 
-              <div className="flex items-center bg-slate-100 dark:bg-gray-700 rounded-xl p-1">
-                <button
-                  onClick={() => setViewMode('cards')}
-                  className={`p-2 rounded-lg text-xs ${
-                    viewMode === 'cards' ? 'bg-white dark:bg-gray-800 text-[#1A3C91] dark:text-[#4ADE80] shadow' : 'text-gray-500'
-                  }`}
-                >
-                  <Icon icon={FaThLarge} size={14} />
-                </button>
-                <button
-                  onClick={() => setViewMode('matrix')}
-                  className={`p-2 rounded-lg text-xs ${
-                    viewMode === 'matrix' ? 'bg-white dark:bg-gray-800 text-[#1A3C91] dark:text-[#4ADE80] shadow' : 'text-gray-500'
-                  }`}
-                >
-                  <Icon icon={FaTable} size={14} />
-                </button>
+          <p
+            aria-live="polite"
+            className="container mx-auto px-6 text-xs text-gray-400 dark:text-gray-500 font-body mt-3"
+          >
+            Showing {filteredProducts.length} of {products.length} products
+          </p>
+        </div>
+      )}
+
+      {/* Loading skeleton */}
+      {loading && (
+        <div className="container mx-auto px-6 py-12 space-y-10">
+          {[0, 1].map((i) => (
+            <div
+              key={i}
+              className="animate-pulse bg-white dark:bg-gray-800 rounded-3xl border border-slate-100 dark:border-gray-700 p-6 md:p-10 grid grid-cols-1 lg:grid-cols-2 gap-8"
+            >
+              <div className="aspect-video bg-slate-200 dark:bg-gray-700 rounded-2xl" />
+              <div className="space-y-4">
+                <div className="h-4 w-24 bg-slate-200 dark:bg-gray-700 rounded-full" />
+                <div className="h-8 w-2/3 bg-slate-200 dark:bg-gray-700 rounded-lg" />
+                <div className="h-3 w-full bg-slate-200 dark:bg-gray-700 rounded" />
+                <div className="h-3 w-5/6 bg-slate-200 dark:bg-gray-700 rounded" />
+                <div className="h-3 w-3/4 bg-slate-200 dark:bg-gray-700 rounded" />
               </div>
             </div>
+          ))}
+        </div>
+      )}
+
+      {/* Error state */}
+      {!loading && error && (
+        <div className="container mx-auto px-6 py-16">
+          <div className="text-center py-16 bg-red-50 dark:bg-gray-800 rounded-2xl border border-red-100 dark:border-gray-700 max-w-lg mx-auto">
+            <Icon
+              icon={FaExclamationTriangle}
+              className="text-red-400 dark:text-red-400 mx-auto mb-4"
+              size={32}
+            />
+            <p className="text-gray-600 dark:text-gray-300 font-body text-lg mb-5">
+              We couldn't load our products right now. Please try again.
+            </p>
+            <button
+              onClick={fetchProducts}
+              className="inline-flex items-center gap-2 bg-[#1A3C91] hover:bg-[#152f73] text-white px-5 py-2.5 rounded-lg font-semibold transition-colors duration-200"
+            >
+              <Icon icon={FaRedo} size={14} />
+              Retry
+            </button>
           </div>
         </div>
+      )}
 
-        {/* Product Cards View */}
-        {!loading && viewMode === 'cards' && (
-          <div className="space-y-10">
-            {filteredProducts.map((product, index) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                index={index}
-                onOpenSpecs={(p) => setActiveSpecProduct(p)}
-                onOpenQuote={(p) => setActiveQuoteProduct(p)}
-                onOpenFullscreen3D={(p) => setFullscreen3DProduct(p)}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Matrix View */}
-        {!loading && viewMode === 'matrix' && (
-          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-slate-200 dark:border-gray-700 overflow-hidden">
-            <div className="p-6 bg-slate-50 dark:bg-gray-900/50 border-b border-slate-200 dark:border-gray-700">
-              <h3 className="text-xl font-heading font-extrabold text-[#1A3C91] dark:text-white">
-                Technical Matrix View
-              </h3>
+      {/* Product List */}
+      {!loading && !error && (
+        <div className="container mx-auto px-6 py-12">
+          {filteredProducts.length > 0 ? (
+            <div className="space-y-16">
+              {filteredProducts.map((product, index) => (
+                <ProductCard key={product.id} product={product} index={index} />
+              ))}
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold uppercase">
-                  <tr>
-                    <th className="p-4">Product Name</th>
-                    <th className="p-4">Grade</th>
-                    <th className="p-4">28-Day Strength</th>
-                    <th className="p-4">Initial Setting</th>
-                    <th className="p-4">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-gray-700">
-                  {filteredProducts.map((p) => (
-                    <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-gray-700/40">
-                      <td className="p-4 font-bold text-[#1A3C91] dark:text-white">{p.name}</td>
-                      <td className="p-4 font-mono font-semibold text-emerald-600 dark:text-emerald-400">{p.grade}</td>
-                      <td className="p-4 font-mono">{p.technical_specs?.compressive_strength_28d || '≥ 32.5 MPa'}</td>
-                      <td className="p-4 font-mono">{p.technical_specs?.initial_setting_time || '≥ 60 min'}</td>
-                      <td className="p-4">
-                        <button
-                          onClick={() => setActiveQuoteProduct(p)}
-                          className="px-3 py-1.5 bg-[#2EAD32] text-white rounded-lg font-bold"
-                        >
-                          Quote
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          ) : (
+            <div className="text-center py-16 bg-slate-50 dark:bg-gray-800 rounded-2xl border border-slate-200 dark:border-gray-700">
+              <SectionEyebrow label="Nothing Here Yet" />
+              <p className="text-gray-500 dark:text-gray-400 font-body text-lg">
+                {products.length === 0
+                  ? 'No products in this category yet.'
+                  : 'No products match your search.'}
+              </p>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
-      {/* Fullscreen 3D Stage Modal */}
-      <AnimatePresence>
-        {fullscreen3DProduct && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-slate-950 border border-slate-800 rounded-3xl max-w-4xl w-full p-6 relative text-white"
-            >
-              <button
-                onClick={() => setFullscreen3DProduct(null)}
-                className="absolute top-6 right-6 p-2.5 rounded-full bg-white/10 text-white hover:bg-white/20 z-10"
-              >
-                <Icon icon={FaTimes} size={18} />
-              </button>
-
-              <div className="mb-4">
-                <span className="text-xs font-mono text-[#4ADE80] uppercase tracking-widest">
-                  360° Studio Inspection
-                </span>
-                <h3 className="text-2xl font-bold font-heading">{fullscreen3DProduct.name}</h3>
-              </div>
-
-              <Real3DProductViewer product={fullscreen3DProduct} />
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Datasheet Modal */}
-      <AnimatePresence>
-        {activeSpecProduct && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white dark:bg-gray-800 rounded-3xl max-w-xl w-full p-6 md:p-8 relative border border-slate-200 dark:border-gray-700"
-            >
-              <button
-                onClick={() => setActiveSpecProduct(null)}
-                className="absolute top-6 right-6 p-2 rounded-full bg-slate-100 dark:bg-gray-700 text-gray-500"
-              >
-                <Icon icon={FaTimes} />
-              </button>
-
-              <h2 className="text-2xl font-heading font-extrabold text-[#1A3C91] dark:text-white mb-4">
-                {activeSpecProduct.name} Datasheet
-              </h2>
-
-              <div className="bg-slate-50 dark:bg-gray-900 rounded-xl p-4 text-xs font-mono space-y-2 mb-6">
-                {activeSpecProduct.technical_specs &&
-                  Object.entries(activeSpecProduct.technical_specs).map(([k, v]) => (
-                    <div key={k} className="flex justify-between border-b border-slate-200 dark:border-gray-700 pb-1">
-                      <span className="text-gray-500 capitalize">{k.replace(/_/g, ' ')}</span>
-                      <span className="font-bold text-gray-900 dark:text-gray-100">{String(v)}</span>
-                    </div>
-                  ))}
-              </div>
-
-              <button
-                onClick={() => alert('Downloading PDF Spec Sheet for ' + activeSpecProduct.name)}
-                className="w-full py-3 bg-[#1A3C91] text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2"
-              >
-                <Icon icon={FaFileDownload} /> Download Official PDF Datasheet
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Quote Modal */}
-      <AnimatePresence>
-        {activeQuoteProduct && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white dark:bg-gray-800 rounded-3xl max-w-lg w-full p-6 md:p-8 relative border border-slate-200 dark:border-gray-700"
-            >
-              <button
-                onClick={() => setActiveQuoteProduct(null)}
-                className="absolute top-6 right-6 p-2 rounded-full bg-slate-100 dark:bg-gray-700 text-gray-500"
-              >
-                <Icon icon={FaTimes} />
-              </button>
-
-              <h2 className="text-xl font-heading font-extrabold text-[#1A3C91] dark:text-white mb-2">
-                Request Bulk Quote: {activeQuoteProduct.name}
-              </h2>
-              <p className="text-xs text-gray-500 mb-4">Direct factory price quote generation.</p>
-
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  alert('Quote Request submitted successfully!');
-                  setActiveQuoteProduct(null);
-                }}
-                className="space-y-3 text-xs"
-              >
-                <input
-                  required
-                  type="text"
-                  placeholder="Your Name / Organization"
-                  className="w-full bg-slate-100 dark:bg-gray-700 p-2.5 rounded-xl border border-slate-200 dark:border-gray-600"
-                />
-                <input
-                  required
-                  type="tel"
-                  placeholder="Phone Number (+251...)"
-                  className="w-full bg-slate-100 dark:bg-gray-700 p-2.5 rounded-xl border border-slate-200 dark:border-gray-600"
-                />
-                <input
-                  type="number"
-                  placeholder="Estimated Quantity (50kg Bags or MT)"
-                  className="w-full bg-slate-100 dark:bg-gray-700 p-2.5 rounded-xl border border-slate-200 dark:border-gray-600 font-mono"
-                />
-                <button
-                  type="submit"
-                  className="w-full py-3 bg-[#2EAD32] text-white font-bold rounded-xl hover:bg-[#259329] transition-all text-xs"
-                >
-                  Submit Quote Request
-                </button>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Top Scroll Button */}
+      {/* Scroll to top */}
       <AnimatePresence>
         {showTopBtn && (
           <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="fixed bottom-6 right-6 z-40 bg-[#2EAD32] text-white p-3.5 rounded-full shadow-2xl"
+            aria-label="Scroll to top"
+            className="fixed bottom-6 right-6 z-30 bg-[#2EAD32] hover:bg-[#278f2b] dark:bg-[#4ADE80] dark:hover:bg-[#3fc972] text-white dark:text-gray-900 w-11 h-11 rounded-full shadow-lg flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A3C91] focus-visible:ring-offset-2"
           >
-            <Icon icon={FaChevronUp} size={18} />
+            <Icon icon={FaChevronUp} size={16} />
           </motion.button>
         )}
       </AnimatePresence>
