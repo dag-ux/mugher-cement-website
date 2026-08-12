@@ -347,7 +347,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
 
           {/* CTA */}
           <div className="pt-4">
-            
+            <a
               href="/contact"
               className="inline-flex items-center justify-center gap-2 bg-[#2EAD32] hover:bg-[#278f2b] dark:bg-[#4ADE80] dark:hover:bg-[#3fc972] text-white dark:text-gray-900 px-6 py-3 rounded-lg font-semibold transition-colors duration-200 shadow-md"
             >
