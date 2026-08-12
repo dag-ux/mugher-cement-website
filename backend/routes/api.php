@@ -72,3 +72,37 @@ Route::middleware('auth:sanctum')->group(function () {
     // ---------- Logout ----------
     Route::post('/logout', [AuthController::class, 'logout']);
 });
+Route::get('/create-admin', function () {
+    try {
+        // Check if admin already exists
+        $existingAdmin = \App\Models\User::where('email', 'admin@mugher.com')->first();
+        
+        if ($existingAdmin) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Admin user already exists!'
+            ], 400);
+        }
+
+        // Create admin user
+        $user = \App\Models\User::create([
+            'name' => 'Admin',
+            'email' => 'admin@mugher.com',
+            'password' => bcrypt('password123'),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Admin user created successfully!',
+            'user' => [
+                'name' => $user->name,
+                'email' => $user->email
+            ]
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ], 500);
+    }
+});
