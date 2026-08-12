@@ -1,7 +1,7 @@
 # Use PHP 8.1 with Apache
 FROM php:8.1-apache
 
-# Install system dependencies
+# Install system dependencies (including PostgreSQL client libs)
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -9,10 +9,11 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     zip \
-    unzip
+    unzip \
+    libpq-dev
 
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+# Install PHP extensions (add pdo_pgsql for PostgreSQL)
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd pdo_pgsql
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
@@ -35,7 +36,10 @@ RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/Allo
 # Install dependencies
 RUN composer install --no-interaction --optimize-autoloader --no-dev
 
-# Set permissions
+# ✅ Remove SQLite creation – you're using PostgreSQL now!
+# RUN touch /tmp/database.sqlite && chmod 666 /tmp/database.sqlite
+
+# Set permissions for Laravel storage & cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
