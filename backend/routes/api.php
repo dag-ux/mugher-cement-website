@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\NewsController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\JobController;
+use App\Http\Controllers\Api\JobApplicationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -19,7 +20,6 @@ use Illuminate\Support\Facades\Route;
 */
 
 // ==================== PUBLIC ROUTES ====================
-// No authentication required
 
 // Products
 Route::get('/products', [ProductController::class, 'index']);
@@ -41,47 +41,33 @@ Route::post('/jobs/{id}/apply', [JobController::class, 'apply']);
 Route::post('/login', [AuthController::class, 'login']);
 
 // ==================== PROTECTED ROUTES ====================
-// Require valid Sanctum token (admin only)
 
 Route::middleware('auth:sanctum')->group(function () {
 
-    // ---------- Products ----------
+    // Products
     Route::post('/products', [ProductController::class, 'store']);
     Route::put('/products/{id}', [ProductController::class, 'update']);
     Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 
-    // ---------- News ----------
+    // News
     Route::post('/news', [NewsController::class, 'store']);
     Route::put('/news/{id}', [NewsController::class, 'update']);
     Route::delete('/news/{id}', [NewsController::class, 'destroy']);
 
-    // ---------- Contact Messages ----------
+    // Contact Messages
     Route::get('/contacts', [ContactController::class, 'index']);
     Route::put('/contacts/{id}/read', [ContactController::class, 'markAsRead']);
 
-    // ---------- Jobs (Admin) ----------
+    // Jobs (Admin)
     Route::post('/admin/jobs', [JobController::class, 'store']);
     Route::put('/admin/jobs/{id}', [JobController::class, 'update']);
     Route::delete('/admin/jobs/{id}', [JobController::class, 'destroy']);
 
-    // ---------- Job Applications (Admin) ----------
-    Route::get('/admin/applications', [JobController::class, 'applications']);
-    Route::put('/admin/applications/{id}', [JobController::class, 'updateApplicationStatus']);
-    Route::get('/admin/applications/{id}/download', [JobController::class, 'downloadCV']);
+    // Job Applications (Admin)
+    Route::get('/admin/applications', [JobApplicationController::class, 'index']);
+    Route::put('/admin/applications/{id}', [JobApplicationController::class, 'update']);
+    Route::get('/admin/applications/{id}/download', [JobApplicationController::class, 'downloadCV']);
 
-    // ---------- Logout ----------
+    // Logout
     Route::post('/logout', [AuthController::class, 'logout']);
 });
-Route::get('/create-admin', function () {
-    try {
-        // Check if admin already exists
-        $existingAdmin = \App\Models\User::where('email', 'admin@mugher.com')->first();
-        
-        if ($existingAdmin) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Admin user already exists!'
-            ], 400);
-        }
-
-       
