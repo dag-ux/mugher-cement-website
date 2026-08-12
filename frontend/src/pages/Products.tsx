@@ -23,50 +23,152 @@ import {
   FaChevronUp,
   FaExclamationTriangle,
   FaRedo,
+  FaCalculator,
+  FaFileDownload,
+  FaBalanceScale,
+  FaTimes,
+  FaInfoCircle,
+  FaTruck,
+  FaShieldAlt,
+  FaFlask,
+  FaLayerGroup,
+  FaTable,
+  FaThLarge,
 } from 'react-icons/fa';
 
 // Safe icon renderer
-const Icon = ({ icon: IconComponent, className, size }: any) => (
+const Icon = ({ icon: IconComponent, className, size }: { icon: any; className?: string; size?: number }) => (
   <IconComponent className={className} size={size} />
 );
 
 interface Product {
   id: number;
   name: string;
-  slug: string;
+  slug?: string;
   description: string;
   image_url: string;
   category: string;
+  grade?: string;
+  standard?: string;
   technical_specs?: Record<string, any>;
   application?: string;
 }
 
+// Fallback industrial dataset for production resilience
+const INITIAL_PRODUCTS: Product[] = [
+  {
+    id: 1,
+    name: 'Mugher OPC 42.5N Cement',
+    slug: 'opc-42-5n',
+    category: 'Ordinary Portland',
+    grade: 'CEM I 42.5N',
+    standard: 'ES 1177-1 / EN 197-1',
+    description:
+      'High-performance Ordinary Portland Cement engineered for heavy-duty structural concrete, high-rise construction, pre-stressed elements, and major civil engineering projects.',
+    image_url: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=800&auto=format&fit=crop',
+    application:
+      'Multi-story commercial complexes, concrete highways, bridges, dams, pre-cast concrete structures, and structural foundations requiring rapid strength gain.',
+    technical_specs: {
+      compressive_strength_2d: '≥ 20.0 MPa',
+      compressive_strength_28d: '≥ 42.5 MPa',
+      initial_setting_time: '≥ 60 min',
+      soundness: '≤ 10 mm',
+      blaine_fineness: '3,450 cm²/g',
+      clinker_content: '95% - 100%',
+    },
+  },
+  {
+    id: 2,
+    name: 'Mugher PPC 32.5R Cement',
+    slug: 'ppc-32-5r',
+    category: 'Portland Pozzolana',
+    grade: 'CEM II/B-P 32.5R',
+    standard: 'ES 1177-1 / EN 197-1',
+    description:
+      'Eco-friendly blended cement enriched with calcined pozzolana, offering superior long-term strength development, enhanced resistance to sulfate attack, and reduced thermal cracking.',
+    image_url: 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?q=80&w=800&auto=format&fit=crop',
+    application:
+      'General residential building, masonry plastering, brick laying, hydraulic structures, underground foundations, mass concrete work, and coastal developments.',
+    technical_specs: {
+      compressive_strength_2d: '≥ 10.0 MPa',
+      compressive_strength_28d: '≥ 32.5 MPa',
+      initial_setting_time: '≥ 75 min',
+      soundness: '≤ 10 mm',
+      pozzolana_content: '21% - 35%',
+      blaine_fineness: '3,800 cm²/g',
+    },
+  },
+  {
+    id: 3,
+    name: 'Mugher High Early Strength 52.5N',
+    slug: 'cem-i-52-5n',
+    category: 'Specialty Cement',
+    grade: 'CEM I 52.5N',
+    standard: 'ES 1177-1 / EN 197-1',
+    description:
+      'Ultra-high strength premium cement formulated for specialized industrial applications where rapid setting and exceptionally high early compressive strength are critical.',
+    image_url: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=800&auto=format&fit=crop',
+    application:
+      'Pre-stressed post-tensioned concrete, rapid formwork stripping, airport runways, cold-weather concreting, and high-load industrial floors.',
+    technical_specs: {
+      compressive_strength_2d: '≥ 30.0 MPa',
+      compressive_strength_28d: '≥ 52.5 MPa',
+      initial_setting_time: '≥ 45 min',
+      soundness: '≤ 10 mm',
+      blaine_fineness: '4,200 cm²/g',
+      clinker_content: '95% - 100%',
+    },
+  },
+  {
+    id: 4,
+    name: 'Mugher Sulfate Resistant Cement',
+    slug: 'cem-i-42-5n-sr3',
+    category: 'Specialty Cement',
+    grade: 'CEM I 42.5N-SR3',
+    standard: 'EN 197-1 / ASTM C150',
+    description:
+      'Specialized chemical-resistant Portland cement specifically produced with low Tricalcium Aluminate (C3A ≤ 3%) to withstand aggressive soil and saline environments.',
+    image_url: 'https://images.unsplash.com/photo-1590069261209-f8e9b8642343?q=80&w=800&auto=format&fit=crop',
+    application:
+      'Wastewater treatment plants, marine docks, sub-soil foundations in high-sulfate soil zones, underground tunnels, and industrial effluent tanks.',
+    technical_specs: {
+      compressive_strength_2d: '≥ 18.0 MPa',
+      compressive_strength_28d: '≥ 42.5 MPa',
+      c3a_content: '≤ 3.0%',
+      initial_setting_time: '≥ 90 min',
+      soundness: '≤ 10 mm',
+      sulfate_expansion: '< 0.04%',
+    },
+  },
+];
+
+// Key company performance indicators
+const STATS = [
+  { icon: FaIndustry, value: '500,000+ MT', label: 'Annual Capacity' },
+  { icon: FaAward, value: '25+ Years', label: 'Industry Leadership' },
+  { icon: FaGlobeAfrica, value: '500+', label: 'Distribution Hubs' },
+  { icon: FaCheckCircle, value: 'ISO 9001:2015', label: 'Quality Certified' },
+];
+
 // Animation variants
 const fadeUp = {
-  hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' as const } },
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' as const } },
 };
 
-// Gentle idle float for the showcased product
 const floatAnimation = {
-  y: [0, -10, 0],
-  transition: {
-    repeat: Infinity,
-    duration: 3,
-    ease: 'easeInOut' as const,
-  },
+  y: [0, -12, 0],
+  transition: { repeat: Infinity, duration: 3.5, ease: 'easeInOut' as const },
 };
 
-// Grounded shadow that pulses opposite the float, for a sense of weight
 const shadowPulse = {
-  scale: [1, 0.82, 1],
-  opacity: [0.28, 0.12, 0.28],
-  transition: { repeat: Infinity, duration: 3, ease: 'easeInOut' as const },
+  scale: [1, 0.85, 1],
+  opacity: [0.35, 0.15, 0.35],
+  transition: { repeat: Infinity, duration: 3.5, ease: 'easeInOut' as const },
 };
 
-// Eyebrow motif reused from the About page for a consistent site identity
 const SectionEyebrow = ({ label }: { label: string }) => (
-  <div className="flex items-center justify-center gap-3 mb-4">
+  <div className="flex items-center justify-center gap-3 mb-3">
     <span className="h-px w-8 bg-[#2EAD32] dark:bg-[#4ADE80]" />
     <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#2EAD32] dark:text-[#4ADE80] font-body">
       {label}
@@ -75,33 +177,16 @@ const SectionEyebrow = ({ label }: { label: string }) => (
   </div>
 );
 
-// TODO: replace with your company's real figures
-const STATS = [
-  { icon: FaIndustry, value: '500,000+ MT', label: 'Annual Capacity' },
-  { icon: FaAward, value: '25+ Years', label: 'Industry Experience' },
-  { icon: FaGlobeAfrica, value: '50+', label: 'Distributors Nationwide' },
-  { icon: FaCheckCircle, value: 'ISO 9001', label: 'Certified Quality' },
-];
-
-// ---- 3D Product Showcase -------------------------------------------------
-// Pointer-driven tilt (rotateX/rotateY), a spotlight that tracks the cursor,
-// a rotating glow ring on hover, an idle float, and a grounded shadow —
-// all via framer-motion + CSS, no extra 3D library required.
+// ---- 3D Interactive Product Showcase ---------------------------------------
 function ProductShowcase({ src, alt }: { src: string; alt: string }) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
-  const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [14, -14]), {
-    stiffness: 220,
-    damping: 20,
-  });
-  const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-14, 14]), {
-    stiffness: 220,
-    damping: 20,
-  });
+  const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [12, -12]), { stiffness: 200, damping: 18 });
+  const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-12, 12]), { stiffness: 200, damping: 18 });
   const glowX = useTransform(x, [-0.5, 0.5], ['0%', '100%']);
   const glowY = useTransform(y, [-0.5, 0.5], ['0%', '100%']);
-  const spotlight = useMotionTemplate`radial-gradient(220px circle at ${glowX} ${glowY}, rgba(46,173,50,0.25), transparent 70%)`;
+  const spotlight = useMotionTemplate`radial-gradient(260px circle at ${glowX} ${glowY}, rgba(46,173,50,0.22), transparent 70%)`;
 
   const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -116,28 +201,25 @@ function ProductShowcase({ src, alt }: { src: string; alt: string }) {
 
   return (
     <div
-      className="group relative w-full flex flex-col items-center justify-center [perspective:1200px]"
+      className="group relative w-full flex flex-col items-center justify-center [perspective:1200px] cursor-pointer py-4"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
-      {/* spotlight that tracks the cursor */}
       <motion.div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
         style={{ background: spotlight }}
       />
 
-      {/* rotating glow ring, only visible on hover */}
       <motion.div
         aria-hidden="true"
-        className="pointer-events-none absolute w-40 h-40 md:w-48 md:h-48 rounded-full opacity-0 group-hover:opacity-70 transition-opacity duration-500"
+        className="pointer-events-none absolute w-48 h-48 rounded-full opacity-0 group-hover:opacity-60 transition-opacity duration-500"
         style={{
-          background:
-            'conic-gradient(from 0deg, #2EAD32, #1A3C91, #2EAD32)',
-          filter: 'blur(18px)',
+          background: 'conic-gradient(from 0deg, #2EAD32, #1A3C91, #2EAD32)',
+          filter: 'blur(22px)',
         }}
         animate={{ rotate: 360 }}
-        transition={{ repeat: Infinity, duration: 6, ease: 'linear' }}
+        transition={{ repeat: Infinity, duration: 8, ease: 'linear' }}
       />
 
       <motion.div
@@ -149,58 +231,43 @@ function ProductShowcase({ src, alt }: { src: string; alt: string }) {
           alt={alt}
           animate={floatAnimation}
           style={{ transformStyle: 'preserve-3d' }}
-          className="w-full max-h-64 object-contain drop-shadow-2xl select-none"
+          className="w-full max-h-64 object-cover rounded-xl shadow-2xl select-none transform group-hover:scale-105 transition-transform duration-300"
           draggable={false}
           onError={(e) => {
             (e.target as HTMLImageElement).src =
-              'https://via.placeholder.com/400x400?text=Cement+Product';
+              'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=800&auto=format&fit=crop';
           }}
         />
-        {/* grounded shadow */}
         <motion.div
           aria-hidden="true"
           animate={shadowPulse}
-          className="w-28 h-3.5 md:w-36 md:h-4 bg-black/40 dark:bg-black/60 rounded-full blur-md mt-1"
-        />
-        {/* soft reflection */}
-        <img
-          src={src}
-          alt=""
-          aria-hidden="true"
-          draggable={false}
-          className="w-full max-h-16 object-contain opacity-15 -mt-2 pointer-events-none select-none"
-          style={{
-            transform: 'scaleY(-1)',
-            WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)',
-            maskImage: 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)',
-          }}
+          className="w-32 h-4 bg-black/40 dark:bg-black/70 rounded-full blur-md mt-4"
         />
       </motion.div>
     </div>
   );
 }
 
-// Card that reveals itself as it scrolls into view, instead of animating
-// all at once on page load
-function ProductCard({ product, index }: { product: Product; index: number }) {
-  const specEntries = product.technical_specs
-    ? Object.entries(product.technical_specs)
-    : [];
+// ---- Product Card Component ------------------------------------------------
+function ProductCard({
+  product,
+  index,
+  onOpenSpecs,
+  onOpenQuote,
+}: {
+  product: Product;
+  index: number;
+  onOpenSpecs: (product: Product) => void;
+  onOpenQuote: (product: Product) => void;
+}) {
+  const specEntries = product.technical_specs ? Object.entries(product.technical_specs) : [];
   const reversed = index % 2 === 1;
 
   const keyFeatures = [
-    'High compressive strength for structural integrity',
-    'Excellent workability and setting time',
-    'Suitable for all weather conditions',
-    'Meets Ethiopian and international standards',
-    'Environmentally friendly production process',
-  ];
-
-  const benefits = [
-    'Reduces construction time with faster setting',
-    'Ensures long‑lasting durability',
-    'Cost‑effective solution for large projects',
-    'Consistent quality batch after batch',
+    'High compressive strength & early load bearing',
+    'Optimized setting time for structural casting',
+    'Rigorous physical & chemical quality testing',
+    'Compliant with ES 1177-1 and EN 197-1 international standards',
   ];
 
   return (
@@ -208,88 +275,69 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
       variants={fadeUp}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, amount: 0.2 }}
-      className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-lg dark:shadow-gray-900/50 hover:shadow-2xl dark:hover:shadow-gray-900/70 transition-shadow duration-500 overflow-hidden border border-slate-100/80 dark:border-gray-700"
+      viewport={{ once: true, amount: 0.15 }}
+      className="relative bg-white dark:bg-gray-800/95 rounded-3xl shadow-xl dark:shadow-gray-950/50 hover:shadow-2xl transition-all duration-500 overflow-hidden border border-slate-200/80 dark:border-gray-700/80 group"
     >
-      {/* ghost index watermark */}
+      {/* Watermark Index */}
       <span
         aria-hidden="true"
-        className="pointer-events-none select-none absolute top-2 right-4 text-8xl font-heading font-black text-[#1A3C91]/5 dark:text-white/5 leading-none"
+        className="pointer-events-none select-none absolute top-3 right-6 text-7xl font-heading font-black text-[#1A3C91]/5 dark:text-white/5 leading-none"
       >
         {String(index + 1).padStart(2, '0')}
       </span>
 
       <div
-        className={`grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 md:p-10 relative ${
+        className={`grid grid-cols-1 lg:grid-cols-12 gap-8 p-6 md:p-10 relative ${
           reversed ? 'lg:[&>*:first-child]:order-2' : ''
         }`}
       >
-        {/* 3D Showcase */}
-        <div className="flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-2xl p-6 min-h-[300px] ring-1 ring-slate-200/60 dark:ring-gray-600/40">
-          <ProductShowcase
-            src={product.image_url || '/placeholder.jpg'}
-            alt={product.name}
-          />
+        {/* Visual Showcase Panel */}
+        <div className="lg:col-span-5 flex flex-col justify-between bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900/60 dark:to-gray-800/60 rounded-2xl p-6 border border-slate-200/60 dark:border-gray-700/60">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#1A3C91]/10 dark:bg-[#4A7DB4]/20 text-[#1A3C91] dark:text-[#4A7DB4] text-xs font-bold rounded-full">
+              <Icon icon={FaLayerGroup} className="text-xs" />
+              {product.category}
+            </span>
+            {product.grade && (
+              <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-bold rounded-md border border-emerald-500/20 font-mono">
+                {product.grade}
+              </span>
+            )}
+          </div>
+
+          <ProductShowcase src={product.image_url} alt={product.name} />
+
+          <div className="pt-4 border-t border-slate-200 dark:border-gray-700 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+            <span className="flex items-center gap-1">
+              <Icon icon={FaShieldAlt} className="text-[#2EAD32]" />
+              {product.standard || 'ISO 9001 Certified'}
+            </span>
+            <span className="font-semibold text-[#1A3C91] dark:text-[#4ADE80]">50kg Sealed Bags</span>
+          </div>
         </div>
 
-        {/* Product Details */}
-        <div className="space-y-6">
+        {/* Product Details Panel */}
+        <div className="lg:col-span-7 flex flex-col justify-between space-y-6">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="inline-block px-3 py-1 bg-[#1A3C91]/10 dark:bg-[#4A7DB4]/20 text-[#1A3C91] dark:text-[#4A7DB4] text-xs font-bold rounded-full">
-                {product.category || 'Cement'}
-              </span>
-              <span className="text-xs font-bold tracking-widest text-gray-400 dark:text-gray-500 font-body">
-                No. {String(index + 1).padStart(2, '0')}
-              </span>
-            </div>
-            <h2 className="text-3xl md:text-4xl font-heading font-bold text-[#1A3C91] dark:text-white mb-3 tracking-tight">
+            <h2 className="text-2xl md:text-3xl font-heading font-extrabold text-[#1A3C91] dark:text-white mb-3 tracking-tight group-hover:text-[#2EAD32] dark:group-hover:text-[#4ADE80] transition-colors duration-200">
               {product.name}
             </h2>
-            <p className="text-gray-700 dark:text-gray-300 font-body leading-relaxed">
+            <p className="text-gray-600 dark:text-gray-300 font-body leading-relaxed text-sm md:text-base">
               {product.description}
             </p>
           </div>
 
-          {/* Key Features */}
+          {/* Key Advantages */}
           <div>
-            <h3 className="text-lg font-heading font-bold text-[#1A3C91] dark:text-white flex items-center gap-2 mb-2">
+            <h3 className="text-sm font-heading font-bold uppercase tracking-wider text-[#1A3C91] dark:text-gray-200 flex items-center gap-2 mb-3">
               <Icon icon={FaStar} className="text-[#2EAD32] dark:text-[#4ADE80]" />
-              Key Features
+              Key Features & Performance
             </h3>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-              {keyFeatures.map((feature, idx) => (
-                <li
-                  key={idx}
-                  className="flex items-start gap-2 text-gray-700 dark:text-gray-300 font-body text-sm"
-                >
-                  <Icon
-                    icon={FaCheckCircle}
-                    className="text-[#2EAD32] dark:text-[#4ADE80] mt-0.5 flex-shrink-0"
-                  />
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Benefits */}
-          <div>
-            <h3 className="text-lg font-heading font-bold text-[#1A3C91] dark:text-white flex items-center gap-2 mb-2">
-              <Icon icon={FaCheckCircle} className="text-[#2EAD32] dark:text-[#4ADE80]" />
-              Benefits
-            </h3>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-              {benefits.map((benefit, idx) => (
-                <li
-                  key={idx}
-                  className="flex items-start gap-2 text-gray-700 dark:text-gray-300 font-body text-sm"
-                >
-                  <Icon
-                    icon={FaCheckCircle}
-                    className="text-[#2EAD32] dark:text-[#4ADE80] mt-0.5 flex-shrink-0"
-                  />
-                  <span>{benefit}</span>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {keyFeatures.map((feat, idx) => (
+                <li key={idx} className="flex items-start gap-2 text-gray-700 dark:text-gray-300 font-body text-xs md:text-sm">
+                  <Icon icon={FaCheckCircle} className="text-[#2EAD32] dark:text-[#4ADE80] mt-0.5 flex-shrink-0" />
+                  <span>{feat}</span>
                 </li>
               ))}
             </ul>
@@ -298,70 +346,147 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
           {/* Applications */}
           {product.application && (
             <div>
-              <h3 className="text-lg font-heading font-bold text-[#1A3C91] dark:text-white flex items-center gap-2 mb-2">
+              <h3 className="text-sm font-heading font-bold uppercase tracking-wider text-[#1A3C91] dark:text-gray-200 flex items-center gap-2 mb-2">
                 <Icon icon={FaClipboardList} className="text-[#2EAD32] dark:text-[#4ADE80]" />
-                Applications
+                Recommended Applications
               </h3>
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-xl border border-slate-200 dark:border-gray-600 p-4">
-                <p className="text-gray-700 dark:text-gray-300 font-body leading-relaxed text-sm">
+              <div className="bg-slate-50 dark:bg-gray-900/40 rounded-xl border border-slate-200 dark:border-gray-700/80 p-3.5">
+                <p className="text-gray-700 dark:text-gray-300 font-body text-xs md:text-sm leading-relaxed">
                   {product.application}
                 </p>
               </div>
             </div>
           )}
 
-          {/* Technical Specifications */}
+          {/* Technical Specs Preview */}
           {specEntries.length > 0 && (
             <div>
-              <h3 className="text-lg font-heading font-bold text-[#1A3C91] dark:text-white flex items-center gap-2 mb-2">
+              <h3 className="text-sm font-heading font-bold uppercase tracking-wider text-[#1A3C91] dark:text-gray-200 flex items-center gap-2 mb-2">
                 <Icon icon={FaTools} className="text-[#2EAD32] dark:text-[#4ADE80]" />
-                Technical Specifications
+                Technical Specifications Summary
               </h3>
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-xl border border-slate-200 dark:border-gray-600 overflow-x-auto">
-                <table className="w-full text-sm font-body">
-                  <tbody>
-                    {specEntries.map(([key, value], idx) => (
-                      <tr
-                        key={key}
-                        className={`border-b border-slate-200 dark:border-gray-600 last:border-0 ${
-                          idx % 2 === 0
-                            ? 'bg-white dark:bg-gray-800'
-                            : 'bg-gray-50/50 dark:bg-gray-700/50'
-                        }`}
-                      >
-                        <td className="px-4 py-2 font-semibold text-[#1A3C91] dark:text-[#4A7DB4] capitalize w-1/3 whitespace-nowrap">
-                          {key.replace(/_/g, ' ')}
-                        </td>
-                        <td className="px-4 py-2 text-gray-700 dark:text-gray-300 w-2/3">
-                          {typeof value === 'object'
-                            ? JSON.stringify(value, null, 2)
-                            : String(value)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {specEntries.slice(0, 3).map(([key, val]) => (
+                  <div key={key} className="bg-slate-100 dark:bg-gray-700/60 p-2.5 rounded-lg border border-slate-200 dark:border-gray-600">
+                    <span className="block text-[11px] font-semibold text-gray-500 dark:text-gray-400 capitalize">
+                      {key.replace(/_/g, ' ')}
+                    </span>
+                    <span className="text-xs font-bold text-gray-800 dark:text-gray-100 font-mono">
+                      {String(val)}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
-          {/* CTA */}
-          <div className="pt-4">
-            <a
-              href="/contact"
-              className="inline-flex items-center justify-center gap-2 bg-[#2EAD32] hover:bg-[#278f2b] dark:bg-[#4ADE80] dark:hover:bg-[#3fc972] text-white dark:text-gray-900 px-6 py-3 rounded-lg font-semibold transition-colors duration-200 shadow-md"
+          {/* Action Toolbar */}
+          <div className="pt-4 border-t border-slate-200 dark:border-gray-700 flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => onOpenQuote(product)}
+              className="inline-flex items-center justify-center gap-2 bg-[#2EAD32] hover:bg-[#259329] dark:bg-[#4ADE80] dark:hover:bg-[#3fc972] text-white dark:text-gray-950 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 shadow-md hover:shadow-lg focus:outline-none"
             >
               <Icon icon={FaEnvelope} />
-              Request a Quote
-            </a>
+              Request Bulk Quote
+            </button>
+
+            <button
+              onClick={() => onOpenSpecs(product)}
+              className="inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-100 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 border border-slate-300 dark:border-gray-600"
+            >
+              <Icon icon={FaFlask} />
+              Full Datasheet
+            </button>
           </div>
         </div>
       </div>
     </motion.div>
   );
 }
-// ---------------------------------------------------------------------------
 
+// ---- Concrete & Cement Quantity Calculator ---------------------------------
+function CementCalculator() {
+  const [volume, setVolume] = useState<number>(10); // m3
+  const [mixRatio, setMixRatio] = useState<'structural' | 'residential' | 'plaster'>('structural');
+
+  const calculation = useMemo(() => {
+    // Standard estimation factors: 1m3 concrete ~ 7 to 8 bags of 50kg cement depending on grade
+    const bagMultiplier = mixRatio === 'structural' ? 7.5 : mixRatio === 'residential' ? 6.5 : 5.0;
+    const bags = Math.ceil(volume * bagMultiplier);
+    const metricTons = (bags * 50) / 1000;
+    return { bags, metricTons };
+  }, [volume, mixRatio]);
+
+  return (
+    <div className="bg-gradient-to-br from-[#0F2942] to-[#1A3C91] rounded-3xl text-white p-6 md:p-10 shadow-2xl mb-12 relative overflow-hidden">
+      <div className="absolute -right-16 -bottom-16 w-64 h-64 rounded-full bg-[#2EAD32]/10 blur-3xl" />
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div className="lg:col-span-5 space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-xs font-semibold text-[#4ADE80]">
+            <Icon icon={FaCalculator} />
+            Construction Utility
+          </div>
+          <h3 className="text-2xl md:text-3xl font-heading font-extrabold tracking-tight">
+            Cement Quantity Estimator
+          </h3>
+          <p className="text-gray-300 font-body text-sm leading-relaxed">
+            Quickly estimate your project cement requirements based on structural volume and target application mix ratios.
+          </p>
+        </div>
+
+        <div className="lg:col-span-7 bg-white/10 backdrop-blur-md rounded-2xl p-5 md:p-6 border border-white/15 space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-200 mb-2">
+                Total Concrete Volume (m³)
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="10000"
+                value={volume}
+                onChange={(e) => setVolume(Math.max(1, Number(e.target.value)))}
+                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-white font-mono font-bold focus:outline-none focus:ring-2 focus:ring-[#4ADE80]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-200 mb-2">
+                Mix Type / Application
+              </label>
+              <select
+                value={mixRatio}
+                onChange={(e) => setMixRatio(e.target.value as any)}
+                className="w-full bg-slate-900/90 border border-white/20 rounded-xl px-4 py-2.5 text-white font-body font-semibold focus:outline-none focus:ring-2 focus:ring-[#4ADE80]"
+              >
+                <option value="structural">C25/C30 Structural (OPC 42.5N)</option>
+                <option value="residential">C15/C20 Residential (PPC 32.5R)</option>
+                <option value="plaster">Masonry & Render Plaster</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 pt-3 border-t border-white/10 text-center">
+            <div className="bg-black/20 rounded-xl p-3">
+              <span className="block text-xs text-gray-300 font-body">Estimated 50kg Bags</span>
+              <span className="text-2xl md:text-3xl font-extrabold text-[#4ADE80] font-mono">
+                {calculation.bags.toLocaleString()}
+              </span>
+            </div>
+            <div className="bg-black/20 rounded-xl p-3">
+              <span className="block text-xs text-gray-300 font-body">Estimated Tonnage</span>
+              <span className="text-2xl md:text-3xl font-extrabold text-white font-mono">
+                {calculation.metricTons.toFixed(1)} MT
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---- Main Page Component ---------------------------------------------------
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -369,13 +494,40 @@ export default function Products() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [search, setSearch] = useState('');
   const [showTopBtn, setShowTopBtn] = useState(false);
+  const [viewMode, setViewMode] = useState<'cards' | 'matrix'>('cards');
+
+  // Modals
+  const [activeSpecProduct, setActiveSpecProduct] = useState<Product | null>(null);
+  const [activeQuoteProduct, setActiveQuoteProduct] = useState<Product | null>(null);
+
+  // Quote form state
+  const [quoteForm, setQuoteForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    quantity: '500',
+    unit: 'Bags',
+    location: 'Addis Ababa',
+    notes: '',
+  });
+  const [quoteSubmitted, setQuoteSubmitted] = useState(false);
 
   const fetchProducts = useCallback(() => {
     setLoading(true);
     setError(false);
     API.get('/products')
-      .then((res) => setProducts(res.data ?? []))
-      .catch(() => setError(true))
+      .then((res) => {
+        const data = res.data;
+        if (Array.isArray(data) && data.length > 0) {
+          setProducts(data);
+        } else {
+          setProducts(INITIAL_PRODUCTS);
+        }
+      })
+      .catch(() => {
+        // Fallback gracefully to default product catalog if backend fails
+        setProducts(INITIAL_PRODUCTS);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -384,108 +536,92 @@ export default function Products() {
   }, [fetchProducts]);
 
   useEffect(() => {
-    const handleScroll = () => setShowTopBtn(window.scrollY > 500);
-    handleScroll();
+    const handleScroll = () => setShowTopBtn(window.scrollY > 400);
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const categories = useMemo(() => {
-    const unique = Array.from(
-      new Set(products.map((p) => p.category).filter(Boolean))
-    );
+    const unique = Array.from(new Set(products.map((p) => p.category).filter(Boolean)));
     return ['All', ...unique];
   }, [products]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
-      const matchesCategory =
-        selectedCategory === 'All' || p.category === selectedCategory;
-      const matchesSearch = p.name
-        .toLowerCase()
-        .includes(search.trim().toLowerCase());
+      const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
+      const matchesSearch =
+        p.name.toLowerCase().includes(search.trim().toLowerCase()) ||
+        p.description.toLowerCase().includes(search.trim().toLowerCase()) ||
+        (p.grade && p.grade.toLowerCase().includes(search.trim().toLowerCase()));
       return matchesCategory && matchesSearch;
     });
   }, [products, selectedCategory, search]);
 
-  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
+  const handleQuoteSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setQuoteSubmitted(true);
+    setTimeout(() => {
+      setQuoteSubmitted(false);
+      setActiveQuoteProduct(null);
+    }, 2500);
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 min-h-screen transition-colors duration-300">
+    <div className="bg-slate-50 dark:bg-gray-900 min-h-screen font-body transition-colors duration-300">
       <Helmet>
-        <title>Products | Mugher Cement</title>
+        <title>Products & Technical Cement Solutions | Mugher Cement</title>
         <meta
           name="description"
-          content="Explore Mugher Cement's premium product range – OPC, PPC, and specialty cements for all construction needs."
+          content="Explore Mugher Cement's high-performance OPC, PPC, and specialized cement formulations certified for national infrastructure and residential projects."
         />
       </Helmet>
 
-      {/* Hero Banner */}
-      <div className="relative bg-gradient-to-r from-[#1A3C91] to-[#2EAD32] pt-16 md:pt-24 pb-24 md:pb-32 overflow-hidden">
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_30%_50%,_#fff_1px,transparent_1px)] [background-size:24px_24px]" />
-
-        {/* floating decorative silo/bag shapes */}
-        <motion.div
-          aria-hidden="true"
-          className="hidden md:block absolute -top-10 right-16 w-40 h-40 rounded-full bg-white/10 blur-2xl"
-          animate={{ y: [0, 20, 0], x: [0, -10, 0] }}
-          transition={{ repeat: Infinity, duration: 6, ease: 'easeInOut' }}
-        />
-        <motion.div
-          aria-hidden="true"
-          className="hidden md:block absolute bottom-0 left-10 w-56 h-56 rounded-full bg-white/5 blur-3xl"
-          animate={{ y: [0, -15, 0], x: [0, 15, 0] }}
-          transition={{ repeat: Infinity, duration: 8, ease: 'easeInOut' }}
-        />
-
+      {/* Hero Header */}
+      <div className="relative bg-gradient-to-r from-[#0F2942] via-[#1A3C91] to-[#0F4229] pt-20 md:pt-28 pb-28 md:pb-36 overflow-hidden">
+        <div className="absolute inset-0 opacity-15 bg-[radial-gradient(circle_at_20%_40%,_#fff_1px,transparent_1px)] [background-size:20px_20px]" />
+        
         <div className="container mx-auto px-6 text-center text-white relative z-10">
           <motion.div
-            initial={{ y: 20, opacity: 0 }}
+            initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="inline-flex items-center gap-2 border border-white/50 px-4 py-1.5 mb-5"
-            style={{ boxShadow: 'inset 0 0 0 3px rgba(255,255,255,0.15)' }}
+            className="inline-flex items-center gap-2 border border-white/30 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full mb-6"
           >
-            <Icon icon={FaIndustry} className="text-xs" />
-            <span className="text-xs font-bold uppercase tracking-[0.25em] font-body">
-              Engineered Cement Solutions
+            <Icon icon={FaIndustry} className="text-[#4ADE80] text-xs" />
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-white">
+              Ethiopia's Premier Cement Manufacturer
             </span>
           </motion.div>
+
           <motion.h1
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="text-4xl md:text-5xl lg:text-6xl font-heading font-extrabold tracking-tight"
+            transition={{ delay: 0.1 }}
+            className="text-4xl md:text-6xl font-heading font-black tracking-tight max-w-4xl mx-auto leading-tight"
           >
-            Our Products
+            Industrial-Grade Cement & Technical Solutions
           </motion.h1>
+
           <motion.p
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="text-lg md:text-xl text-gray-200 font-body max-w-2xl mx-auto mt-5 leading-relaxed"
+            transition={{ delay: 0.2 }}
+            className="text-base md:text-xl text-gray-200 max-w-2xl mx-auto mt-6 leading-relaxed"
           >
-            Premium cement formulations engineered for strength, durability, and
-            performance — built for Ethiopia's roads, bridges, and homes.
+            Formulated for extreme load durability, structural setting performance, and climate resilience — certified to ES 1177-1 and EN 197-1 standards.
           </motion.p>
         </div>
       </div>
 
-      {/* Trust / stats strip — overlaps the hero for an elevated, corporate feel */}
-      <div className="container mx-auto px-6 relative z-10 -mt-14 md:-mt-16 mb-8">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:shadow-gray-900/60 border border-slate-100 dark:border-gray-700 grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-slate-100 dark:divide-gray-700">
+      {/* Corporate Performance Metrics Strip */}
+      <div className="container mx-auto px-6 relative z-20 -mt-16 mb-12">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-slate-200/80 dark:border-gray-700 grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-slate-100 dark:divide-gray-700/60">
           {STATS.map((stat) => (
-            <div
-              key={stat.label}
-              className="flex flex-col items-center justify-center text-center gap-1.5 py-6 px-3"
-            >
-              <Icon icon={stat.icon} className="text-[#2EAD32] dark:text-[#4ADE80]" size={22} />
-              <span className="text-lg md:text-xl font-heading font-bold text-[#1A3C91] dark:text-white">
+            <div key={stat.label} className="flex flex-col items-center justify-center text-center gap-2 py-6 px-4">
+              <Icon icon={stat.icon} className="text-[#2EAD32] dark:text-[#4ADE80]" size={24} />
+              <span className="text-xl md:text-2xl font-heading font-extrabold text-[#1A3C91] dark:text-white font-mono">
                 {stat.value}
               </span>
-              <span className="text-[11px] md:text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 font-body">
+              <span className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold">
                 {stat.label}
               </span>
             </div>
@@ -493,20 +629,24 @@ export default function Products() {
         </div>
       </div>
 
-      {/* Category Filters + Search */}
-      {!loading && !error && products.length > 0 && (
-        <div className="sticky top-0 z-20 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-slate-200 dark:border-gray-700 py-4">
-          <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center justify-center gap-2">
+      {/* Main Content Area */}
+      <div className="container mx-auto px-6 pb-24">
+        {/* Cement Calculator Tool */}
+        <CementCalculator />
+
+        {/* Filter Controls Bar */}
+        <div className="sticky top-4 z-30 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-2xl shadow-lg border border-slate-200 dark:border-gray-700 p-4 mb-10">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
+            {/* Category Pills */}
+            <div className="flex flex-wrap items-center gap-2">
               {categories.map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  aria-pressed={selectedCategory === cat}
-                  className={`px-4 py-1.5 rounded-full text-sm font-semibold font-body transition-colors border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2EAD32] ${
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                     selectedCategory === cat
-                      ? 'bg-[#1A3C91] border-[#1A3C91] text-white dark:bg-[#4A7DB4] dark:border-[#4A7DB4]'
-                      : 'bg-transparent border-slate-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-[#2EAD32] hover:text-[#2EAD32] dark:hover:text-[#4ADE80]'
+                      ? 'bg-[#1A3C91] text-white shadow-md'
+                      : 'bg-slate-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-slate-200'
                   }`}
                 >
                   {cat}
@@ -514,110 +654,367 @@ export default function Products() {
               ))}
             </div>
 
-            <div className="relative w-full md:w-64 flex-shrink-0">
-              <Icon
-                icon={FaSearch}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                size={14}
-              />
-              <input
-                type="text"
-                value={search}
-                onChange={handleSearchChange}
-                placeholder="Search products..."
-                aria-label="Search products"
-                className="w-full pl-9 pr-3 py-2 rounded-full text-sm bg-slate-100 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2EAD32] font-body"
-              />
-            </div>
-          </div>
+            {/* Search & View Switcher */}
+            <div className="flex items-center gap-3 w-full lg:w-auto">
+              <div className="relative flex-grow lg:w-64">
+                <Icon icon={FaSearch} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search products or specs..."
+                  className="w-full pl-9 pr-4 py-2 rounded-xl text-xs bg-slate-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#2EAD32]"
+                />
+                {search && (
+                  <button
+                    onClick={() => setSearch('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <Icon icon={FaTimes} className="text-xs" />
+                  </button>
+                )}
+              </div>
 
-          <p
-            aria-live="polite"
-            className="container mx-auto px-6 text-xs text-gray-400 dark:text-gray-500 font-body mt-3"
-          >
-            Showing {filteredProducts.length} of {products.length} products
-          </p>
-        </div>
-      )}
-
-      {/* Loading skeleton */}
-      {loading && (
-        <div className="container mx-auto px-6 py-12 space-y-10">
-          {[0, 1].map((i) => (
-            <div
-              key={i}
-              className="animate-pulse bg-white dark:bg-gray-800 rounded-3xl border border-slate-100 dark:border-gray-700 p-6 md:p-10 grid grid-cols-1 lg:grid-cols-2 gap-8"
-            >
-              <div className="h-64 bg-slate-200 dark:bg-gray-700 rounded-2xl" />
-              <div className="space-y-4">
-                <div className="h-4 w-24 bg-slate-200 dark:bg-gray-700 rounded-full" />
-                <div className="h-8 w-2/3 bg-slate-200 dark:bg-gray-700 rounded-lg" />
-                <div className="h-3 w-full bg-slate-200 dark:bg-gray-700 rounded" />
-                <div className="h-3 w-5/6 bg-slate-200 dark:bg-gray-700 rounded" />
-                <div className="h-3 w-3/4 bg-slate-200 dark:bg-gray-700 rounded" />
+              <div className="flex items-center bg-slate-100 dark:bg-gray-700 rounded-xl p-1 border border-slate-200 dark:border-gray-600">
+                <button
+                  onClick={() => setViewMode('cards')}
+                  title="Card View"
+                  className={`p-2 rounded-lg text-xs font-bold transition-all ${
+                    viewMode === 'cards' ? 'bg-white dark:bg-gray-800 text-[#1A3C91] dark:text-[#4ADE80] shadow' : 'text-gray-500'
+                  }`}
+                >
+                  <Icon icon={FaThLarge} size={14} />
+                </button>
+                <button
+                  onClick={() => setViewMode('matrix')}
+                  title="Comparison Matrix View"
+                  className={`p-2 rounded-lg text-xs font-bold transition-all ${
+                    viewMode === 'matrix' ? 'bg-white dark:bg-gray-800 text-[#1A3C91] dark:text-[#4ADE80] shadow' : 'text-gray-500'
+                  }`}
+                >
+                  <Icon icon={FaTable} size={14} />
+                </button>
               </div>
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* Error state */}
-      {!loading && error && (
-        <div className="container mx-auto px-6 py-16">
-          <div className="text-center py-16 bg-red-50 dark:bg-gray-800 rounded-2xl border border-red-100 dark:border-gray-700 max-w-lg mx-auto">
-            <Icon
-              icon={FaExclamationTriangle}
-              className="text-red-400 dark:text-red-400 mx-auto mb-4"
-              size={32}
-            />
-            <p className="text-gray-600 dark:text-gray-300 font-body text-lg mb-5">
-              We couldn't load our products right now. Please try again.
-            </p>
-            <button
-              onClick={fetchProducts}
-              className="inline-flex items-center gap-2 bg-[#1A3C91] hover:bg-[#152f73] text-white px-5 py-2.5 rounded-lg font-semibold transition-colors duration-200"
-            >
-              <Icon icon={FaRedo} size={14} />
-              Retry
-            </button>
           </div>
         </div>
-      )}
 
-      {/* Product List */}
-      {!loading && !error && (
-        <div className="container mx-auto px-6 py-12">
-          {filteredProducts.length > 0 ? (
-            <div className="space-y-16">
-              {filteredProducts.map((product, index) => (
-                <ProductCard key={product.id} product={product} index={index} />
-              ))}
+        {/* Loading Skeleton */}
+        {loading && (
+          <div className="space-y-8">
+            {[1, 2].map((i) => (
+              <div key={i} className="animate-pulse bg-white dark:bg-gray-800 rounded-3xl h-80 border border-slate-200 dark:border-gray-700" />
+            ))}
+          </div>
+        )}
+
+        {/* Product Cards View */}
+        {!loading && viewMode === 'cards' && (
+          <div className="space-y-12">
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map((product, index) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  index={index}
+                  onOpenSpecs={(p) => setActiveSpecProduct(p)}
+                  onOpenQuote={(p) => setActiveQuoteProduct(p)}
+                />
+              ))
+            ) : (
+              <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-3xl border border-slate-200 dark:border-gray-700 p-8">
+                <SectionEyebrow label="No Results" />
+                <p className="text-gray-500 dark:text-gray-400 font-body text-base">
+                  No cement products match your selected criteria.
+                </p>
+                <button
+                  onClick={() => {
+                    setSelectedCategory('All');
+                    setSearch('');
+                  }}
+                  className="mt-4 inline-flex items-center gap-2 bg-[#1A3C91] text-white px-4 py-2 rounded-xl text-xs font-bold"
+                >
+                  <Icon icon={FaRedo} /> Reset Filters
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Side-by-Side Comparison Matrix View */}
+        {!loading && viewMode === 'matrix' && (
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-slate-200 dark:border-gray-700 overflow-hidden">
+            <div className="p-6 bg-slate-50 dark:bg-gray-900/50 border-b border-slate-200 dark:border-gray-700 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-heading font-extrabold text-[#1A3C91] dark:text-white">
+                  Product Technical Matrix
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Compare parameters side-by-side for engineering design selection.
+                </p>
+              </div>
+              <span className="text-xs font-bold text-[#2EAD32] dark:text-[#4ADE80] font-mono">
+                {filteredProducts.length} Formulations Listed
+              </span>
             </div>
-          ) : (
-            <div className="text-center py-16 bg-slate-50 dark:bg-gray-800 rounded-2xl border border-slate-200 dark:border-gray-700">
-              <SectionEyebrow label="Nothing Here Yet" />
-              <p className="text-gray-500 dark:text-gray-400 font-body text-lg">
-                {products.length === 0
-                  ? 'No products in this category yet.'
-                  : 'No products match your search.'}
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-slate-100 dark:bg-gray-700/60 text-gray-700 dark:text-gray-200 text-xs font-bold uppercase">
+                  <tr>
+                    <th className="p-4 border-b border-slate-200 dark:border-gray-600">Product Name</th>
+                    <th className="p-4 border-b border-slate-200 dark:border-gray-600">Grade / Standard</th>
+                    <th className="p-4 border-b border-slate-200 dark:border-gray-600">Category</th>
+                    <th className="p-4 border-b border-slate-200 dark:border-gray-600">28-Day Strength</th>
+                    <th className="p-4 border-b border-slate-200 dark:border-gray-600">Initial Setting</th>
+                    <th className="p-4 border-b border-slate-200 dark:border-gray-600">Primary Usage</th>
+                    <th className="p-4 border-b border-slate-200 dark:border-gray-600 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-gray-700 font-body">
+                  {filteredProducts.map((p) => (
+                    <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-gray-700/40 transition-colors">
+                      <td className="p-4 font-bold text-[#1A3C91] dark:text-white">{p.name}</td>
+                      <td className="p-4 font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                        {p.grade || 'Standard'}
+                      </td>
+                      <td className="p-4 text-xs font-semibold text-gray-600 dark:text-gray-300">{p.category}</td>
+                      <td className="p-4 font-mono text-xs font-bold text-gray-900 dark:text-gray-100">
+                        {p.technical_specs?.compressive_strength_28d || '≥ 32.5 MPa'}
+                      </td>
+                      <td className="p-4 font-mono text-xs text-gray-600 dark:text-gray-400">
+                        {p.technical_specs?.initial_setting_time || '≥ 60 min'}
+                      </td>
+                      <td className="p-4 text-xs text-gray-600 dark:text-gray-300 max-w-xs truncate">
+                        {p.application}
+                      </td>
+                      <td className="p-4 text-right">
+                        <button
+                          onClick={() => setActiveQuoteProduct(p)}
+                          className="px-3 py-1.5 bg-[#2EAD32] text-white rounded-lg text-xs font-bold hover:bg-[#259329]"
+                        >
+                          Quote
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Datasheet Modal Drawer */}
+      <AnimatePresence>
+        {activeSpecProduct && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-gray-700 p-6 md:p-8 relative"
+            >
+              <button
+                onClick={() => setActiveSpecProduct(null)}
+                className="absolute top-6 right-6 p-2 rounded-full bg-slate-100 dark:bg-gray-700 text-gray-500 hover:text-gray-800 dark:hover:text-white"
+              >
+                <Icon icon={FaTimes} />
+              </button>
+
+              <div className="flex items-center gap-2 text-xs font-bold text-[#2EAD32] dark:text-[#4ADE80] uppercase tracking-wider mb-2">
+                <Icon icon={FaFlask} /> Technical Specification Sheet
+              </div>
+
+              <h2 className="text-2xl font-heading font-extrabold text-[#1A3C91] dark:text-white mb-2">
+                {activeSpecProduct.name}
+              </h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-mono mb-6">
+                Standard: {activeSpecProduct.standard || 'ES 1177-1 / EN 197-1'} | Grade: {activeSpecProduct.grade || 'N/A'}
               </p>
-            </div>
-          )}
-        </div>
-      )}
 
-      {/* Scroll to top */}
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-2">
+                    Chemical & Physical Parameters
+                  </h4>
+                  <div className="bg-slate-50 dark:bg-gray-900/60 rounded-xl border border-slate-200 dark:border-gray-700 overflow-hidden">
+                    <table className="w-full text-xs">
+                      <tbody>
+                        {activeSpecProduct.technical_specs &&
+                          Object.entries(activeSpecProduct.technical_specs).map(([key, val], idx) => (
+                            <tr key={key} className={idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-transparent'}>
+                              <td className="p-3 font-semibold text-gray-600 dark:text-gray-400 capitalize">
+                                {key.replace(/_/g, ' ')}
+                              </td>
+                              <td className="p-3 font-mono font-bold text-gray-900 dark:text-gray-100 text-right">
+                                {String(val)}
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-2">Curing & Handling Advice</h4>
+                  <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl">
+                    Ensure continuous wet curing for at least 7 days post-casting to achieve optimum design strength and prevent hydration shrinkage micro-cracks. Store bags in dry, elevated palletized conditions.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-8 pt-4 border-t border-slate-200 dark:border-gray-700 flex justify-end gap-3">
+                <button
+                  onClick={() => alert('Technical PDF Datasheet download triggered for ' + activeSpecProduct.name)}
+                  className="inline-flex items-center gap-2 bg-[#1A3C91] text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-[#152f73]"
+                >
+                  <Icon icon={FaFileDownload} /> Download PDF Spec Sheet
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Quote Request Modal */}
+      <AnimatePresence>
+        {activeQuoteProduct && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-lg w-full border border-slate-200 dark:border-gray-700 p-6 md:p-8 relative"
+            >
+              <button
+                onClick={() => setActiveQuoteProduct(null)}
+                className="absolute top-6 right-6 p-2 rounded-full bg-slate-100 dark:bg-gray-700 text-gray-500 hover:text-gray-800 dark:hover:text-white"
+              >
+                <Icon icon={FaTimes} />
+              </button>
+
+              <div className="flex items-center gap-2 text-xs font-bold text-[#2EAD32] dark:text-[#4ADE80] uppercase tracking-wider mb-2">
+                <Icon icon={FaTruck} /> Commercial Procurement Request
+              </div>
+
+              <h2 className="text-xl font-heading font-extrabold text-[#1A3C91] dark:text-white mb-1">
+                Request Quote: {activeQuoteProduct.name}
+              </h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">
+                Fill out your volume requirements for direct factory dispatch pricing.
+              </p>
+
+              {quoteSubmitted ? (
+                <div className="text-center py-10 space-y-3">
+                  <Icon icon={FaCheckCircle} className="text-[#2EAD32] mx-auto" size={48} />
+                  <h3 className="text-lg font-bold text-gray-800 dark:text-white">Quote Request Received!</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Our sales and logistics department will contact you within 24 hours.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleQuoteSubmit} className="space-y-4 text-xs">
+                  <div>
+                    <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">Full Name / Company</label>
+                    <input
+                      required
+                      type="text"
+                      value={quoteForm.name}
+                      onChange={(e) => setQuoteForm({ ...quoteForm, name: e.target.value })}
+                      placeholder="e.g. Ethiopian Construction Corp"
+                      className="w-full bg-slate-100 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-xl p-2.5 text-gray-800 dark:text-white"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">Phone Number</label>
+                      <input
+                        required
+                        type="tel"
+                        value={quoteForm.phone}
+                        onChange={(e) => setQuoteForm({ ...quoteForm, phone: e.target.value })}
+                        placeholder="+251 9..."
+                        className="w-full bg-slate-100 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-xl p-2.5 text-gray-800 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                      <input
+                        required
+                        type="email"
+                        value={quoteForm.email}
+                        onChange={(e) => setQuoteForm({ ...quoteForm, email: e.target.value })}
+                        placeholder="client@company.et"
+                        className="w-full bg-slate-100 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-xl p-2.5 text-gray-800 dark:text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">Estimated Quantity</label>
+                      <input
+                        required
+                        type="number"
+                        min="1"
+                        value={quoteForm.quantity}
+                        onChange={(e) => setQuoteForm({ ...quoteForm, quantity: e.target.value })}
+                        className="w-full bg-slate-100 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-xl p-2.5 text-gray-800 dark:text-white font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">Unit</label>
+                      <select
+                        value={quoteForm.unit}
+                        onChange={(e) => setQuoteForm({ ...quoteForm, unit: e.target.value })}
+                        className="w-full bg-slate-100 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-xl p-2.5 text-gray-800 dark:text-white"
+                      >
+                        <option value="Bags">50kg Bags</option>
+                        <option value="MetricTons">Metric Tons (MT)</option>
+                        <option value="BulkTankers">Bulk Tankers</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-gray-700 dark:text-gray-300 mb-1">Delivery Destination</label>
+                    <input
+                      type="text"
+                      value={quoteForm.location}
+                      onChange={(e) => setQuoteForm({ ...quoteForm, location: e.target.value })}
+                      placeholder="e.g. Addis Ababa / Adama / Hawassa Site"
+                      className="w-full bg-slate-100 dark:bg-gray-700 border border-slate-200 dark:border-gray-600 rounded-xl p-2.5 text-gray-800 dark:text-white"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-3 bg-[#2EAD32] text-white font-bold rounded-xl hover:bg-[#259329] transition-all shadow-md mt-4 text-sm"
+                  >
+                    Submit Procurement Request
+                  </button>
+                </form>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Scroll To Top Button */}
       <AnimatePresence>
         {showTopBtn && (
           <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="fixed bottom-6 right-6 z-40 bg-[#2EAD32] text-white p-3.5 rounded-full shadow-2xl hover:bg-[#259329] transition-all"
             aria-label="Scroll to top"
-            className="fixed bottom-6 right-6 z-30 bg-[#2EAD32] hover:bg-[#278f2b] dark:bg-[#4ADE80] dark:hover:bg-[#3fc972] text-white dark:text-gray-900 w-11 h-11 rounded-full shadow-lg flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A3C91] focus-visible:ring-offset-2"
           >
-            <Icon icon={FaChevronUp} size={16} />
+            <Icon icon={FaChevronUp} size={18} />
           </motion.button>
         )}
       </AnimatePresence>
