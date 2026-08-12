@@ -84,25 +84,4 @@ Route::get('/create-admin', function () {
             ], 400);
         }
 
-        // Create admin user
-        $user = \App\Models\User::create([
-            'name' => 'Admin',
-            'email' => 'admin@mugher.com',
-            'password' => bcrypt('password123'),
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Admin user created successfully!',
-            'user' => [
-                'name' => $user->name,
-                'email' => $user->email
-            ]
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'error' => $e->getMessage()
-        ], 500);
-    }
-});
+       
