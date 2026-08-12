@@ -72,18 +72,3 @@ Route::middleware('auth:sanctum')->group(function () {
     // ---------- Logout ----------
     Route::post('/logout', [AuthController::class, 'logout']);
 });
-// Temporary migration endpoint – REMOVE after use!
-Route::get('/migrate', function () {
-    try {
-        \Artisan::call('migrate --force');
-        return response()->json([
-            'success' => true,
-            'message' => 'Migrations ran successfully!'
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'error' => $e->getMessage()
-        ], 500);
-    }
-});
